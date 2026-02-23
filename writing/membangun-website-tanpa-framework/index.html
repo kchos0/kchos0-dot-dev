@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Membangun Website Personal Tanpa Framework &mdash; kchos0</title>
+    <meta name="description" content="minimalist portfolio and writings.">
+    <script>
+        const svdTheme = localStorage.getItem('theme');
+        if (svdTheme) document.documentElement.setAttribute('data-theme', svdTheme);
+        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+    <style>
+        html[data-theme="dark"] {
+            --bg-color: #111111;
+            --text-main: #EFEFEF;
+            --text-muted: #888888;
+            --border-color: #333333;
+            --hover-color: #EFEFEF;
+        }
+
+        :root {
+            --bg-color: #FFFFFF;
+            --text-main: #000000;
+            --text-muted: #888888;
+            --border-color: #EFEFEF;
+            --hover-color: #333333;
+
+            --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+            --space-xs: 0.5rem;
+            --space-sm: 1rem;
+            --space-md: 2rem;
+            --space-lg: 4rem;
+            --space-xl: 6rem;
+        }
+
+        /* ==========================================================================
+   CSS Reset & Base
+   ========================================================================== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        ::selection {
+            background-color: var(--text-main);
+            color: var(--bg-color);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            transition: color 0.2s ease, opacity 0.2s ease;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        /* ==========================================================================
+   Layout: Mobile = stacked, Desktop = 2-column sidebar
+   ========================================================================== */
+        .site-wrapper {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 768px) {
+            .site-wrapper {
+                flex-direction: row;
+                padding: var(--space-xl) var(--space-lg);
+                gap: var(--space-xl);
+                align-items: flex-start;
+            }
+        }
+
+        /* ==========================================================================
+   Sidebar — sticky top bar on mobile, sticky column on desktop
+   ========================================================================== */
+        .sidebar {
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem var(--space-sm);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        @media (min-width: 768px) {
+            .sidebar {
+                display: block;
+                width: 200px;
+                position: sticky;
+                top: var(--space-xl);
+                border-bottom: none;
+                padding: 0;
+                background-color: transparent;
+            }
+        }
+
+        .brand {
+            margin-bottom: 0;
+        }
+
+        @media (min-width: 768px) {
+            .brand {
+                margin-bottom: var(--space-md);
+            }
+        }
+
+        .brand h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        @media (min-width: 768px) {
+            .brand h1 {
+                font-size: 1.5rem;
+                margin-bottom: 0.2rem;
+            }
+        }
+
+        .tagline {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .nav-vertical {
+            display: flex;
+            flex-direction: row;
+            gap: 1.25rem;
+            align-items: center;
+            margin-bottom: 0;
+            font-size: 0.9rem;
+        }
+
+        @media (min-width: 768px) {
+            .nav-vertical {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+                margin-bottom: var(--space-md);
+                font-size: 0.95rem;
+            }
+        }
+
+        .nav-vertical a {
+            color: var(--text-muted);
+        }
+
+        .nav-vertical a.active,
+        .nav-vertical a:hover {
+            color: var(--text-main);
+        }
+
+        @media (max-width: 767px) {
+            .nav-vertical a.active::before {
+                content: '';
+            }
+
+            .nav-vertical a.active {
+                text-decoration: underline;
+                text-underline-offset: 3px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .nav-vertical a.active::before {
+                content: '→ ';
+            }
+        }
+
+        #theme-toggle {
+            margin-top: 0 !important;
+        }
+
+        /* ==========================================================================
+   Content Area
+   ========================================================================== */
+        .content-area {
+            flex-grow: 1;
+            max-width: 600px;
+            min-width: 0;
+            padding: var(--space-md) var(--space-sm);
+        }
+
+        @media (min-width: 768px) {
+            .content-area {
+                padding: 0;
+            }
+        }
+
+        .intro-section {
+            margin-bottom: var(--space-md);
+        }
+
+        @media (min-width: 768px) {
+            .intro-section {
+                margin-bottom: var(--space-lg);
+            }
+        }
+
+        .intro-text {
+            font-family: var(--font-serif);
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            line-height: 1.4;
+            color: var(--text-main);
+        }
+
+        .highlight {
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        /* ==========================================================================
+   Lists (Notes & Projects)
+   ========================================================================== */
+        .list-section {
+            margin-bottom: var(--space-lg);
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-sm);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .clean-list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .list-link {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 0.8rem 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .list-link:hover {
+            border-bottom-style: solid;
+            border-bottom-color: var(--text-main);
+        }
+
+        .list-title {
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.3;
+            padding-right: 1rem;
+            transition: padding 0.2s ease;
+        }
+
+        .list-link:hover .list-title {
+            padding-left: 0.5rem;
+        }
+
+        .list-meta {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .project-link {
+            align-items: flex-start;
+        }
+
+        .project-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .project-role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.1rem;
+        }
+
+        /* ==========================================================================
+   Footer
+   ========================================================================== */
+        .footer-layout {
+            margin-top: var(--space-xl);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            padding-top: var(--space-sm);
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        @media (min-width: 768px) {
+            .footer-layout {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                border-top: 1px solid var(--border-color);
+            }
+        }
+
+        .footer-socials {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-socials a:hover,
+        .footer-copyright {
+            color: var(--text-main);
+        }
+
+        /* ==========================================================================
+   Article Body Typography
+   ========================================================================== */
+        .article-body {
+            font-family: var(--font-serif);
+            font-size: 1.15rem;
+            line-height: 1.8;
+            color: var(--text-main);
+        }
+
+        .article-body p {
+            margin-bottom: 1.5rem;
+        }
+
+        .article-body h2 {
+            font-family: var(--font-sans);
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-top: 3rem;
+            margin-bottom: 0.85rem;
+            line-height: 1.2;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .article-body h3 {
+            font-family: var(--font-sans);
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            margin-top: 2.5rem;
+            margin-bottom: 0.6rem;
+            line-height: 1.3;
+        }
+
+        .article-body ul,
+        .article-body ol {
+            list-style: disc;
+            padding-left: 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .article-body ol {
+            list-style: decimal;
+        }
+
+        .article-body li {
+            margin-bottom: 0.45rem;
+        }
+
+        .article-body hr {
+            border: none;
+            border-top: 1px dashed var(--border-color);
+            margin: 2.5rem 0;
+        }
+
+        .article-body blockquote {
+            border-left: 3px solid var(--border-color);
+            padding: 0.25rem 0 0.25rem 1.25rem;
+            color: var(--text-muted);
+            margin: 0 0 1.5rem 0;
+            font-style: italic;
+        }
+
+        .article-body code {
+            font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
+            font-size: 0.85em;
+            background-color: var(--border-color);
+            padding: 0.15em 0.45em;
+            border-radius: 4px;
+        }
+
+        html[data-theme="dark"] .article-body code {
+            background-color: #2a2a2a;
+        }
+
+        /* Code blocks */
+        .article-body pre {
+            background-color: #f5f5f5;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.1rem 1.25rem;
+            overflow-x: auto;
+            margin-bottom: 1.75rem;
+            font-size: 0.88rem;
+            line-height: 1.65;
+        }
+
+        html[data-theme="dark"] .article-body pre {
+            background-color: #1a1a1a;
+            border-color: #2e2e2e;
+        }
+
+        .article-body pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            font-size: inherit;
+        }
+
+        /* ==========================================================================
+   Code Block: Wrapper with header bar
+   ========================================================================== */
+        .code-block-wrapper {
+            position: relative;
+            margin-bottom: 1.75rem;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+            font-size: 0.875rem;
+        }
+
+        html[data-theme="dark"] .code-block-wrapper {
+            border-color: #2e2e2e;
+        }
+
+        .code-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #e8e8e8;
+            padding: 0.45rem 1rem;
+            font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+            font-size: 0.78rem;
+            color: #555;
+            user-select: none;
+        }
+
+        html[data-theme="dark"] .code-block-header {
+            background-color: #252525;
+            color: #888;
+        }
+
+        .code-block-copy {
+            background: none;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 0.2rem 0.55rem;
+            font-size: 0.72rem;
+            font-family: inherit;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            line-height: 1.4;
+        }
+
+        html[data-theme="dark"] .code-block-copy {
+            border-color: #444;
+            color: #888;
+        }
+
+        .code-block-copy:hover {
+            background-color: #d0d0d0;
+            color: #222;
+        }
+
+        html[data-theme="dark"] .code-block-copy:hover {
+            background-color: #333;
+            color: #ddd;
+        }
+
+        .code-block-copy.copied {
+            color: #2d8a4e;
+            border-color: #2d8a4e;
+        }
+
+        .article-body .code-block-wrapper pre {
+            margin-bottom: 0;
+            border: none;
+            border-radius: 0;
+            background-color: #f7f7f7;
+            padding: 1rem 1.25rem;
+            overflow-x: auto;
+            line-height: 1.65;
+            white-space: pre;
+        }
+
+        html[data-theme="dark"] .article-body .code-block-wrapper pre {
+            background-color: #1a1a1a;
+        }
+
+        .article-body .code-block-wrapper pre code.hljs {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            font-size: inherit;
+            white-space: pre;
+        }
+    </style>
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+        id="hljs-light">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+        id="hljs-dark" disabled>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+
+<body>
+
+    <div class="site-wrapper">
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>kchos0</h1>
+            </div>
+            <nav class="nav-vertical">
+                <a href="/" class="">index</a>
+                <a href="/writing" class="active">writing</a>
+                <a href="/projects" class="">projects</a>
+                <button id="theme-toggle"
+                    style="background:none; border:none; cursor:pointer; color:var(--text-muted); text-align:left; padding:0; margin-top:1rem; font-size:1.1rem; display:flex; align-items:center; opacity:0.7; transition:opacity 0.2s;"
+                    onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7"
+                    aria-label="Toggle Dark Mode">◑</button>
+            </nav>
+        </aside>
+
+        <main class="content-area">
+            
+            <br>
+            <a href="/writing"
+                style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; display: inline-block;">&larr;
+                back to writing</a>
+
+            <article>
+                <header style="margin-bottom: var(--space-lg);">
+                    <h1 class="hero-title"
+                        style="font-size: clamp(2rem, 4vw, 2.5rem); margin-bottom: 0.5rem; line-height: 1.1;">Membangun Website Personal Tanpa Framework
+                    </h1>
+                    <time style="font-family: monospace; color: var(--text-muted); font-size: 0.9rem;">February 22, 2026</time>
+                </header>
+
+                <div class="article-body">
+                    <p>Orang pertama kali buka website ini biasanya langsung nanya,  “Pakai framework apa sih?”</p>
+<p>Jawabannya pendek: nggak pakai apa-apa.</p>
+<h3>Kenapa engga pakai framework?</h3>
+<p>Sebenernya ini adalah website experiment ku sendiri.</p>
+<p>Aku pengen tau apakah bisa membuat website tanpa framework di era modern ini dan masih tetep keliatan keren.
+Jawabannya bisa kalian liat sendiri di web ini</p>
+<h3>Zero-stack, beneran nol</h3>
+<p>Aku nyebut pendekatan ini <strong>zero-stack</strong>. Bener-bener nggak ada apa-apa di runtime:</p>
+<ul>
+<li>HTML polos buat kerangka</li>
+<li>CSS polos buat styling</li>
+<li>Python buat nge-build</li>
+<li>Markdown buat nulis konten</li>
+</ul>
+<p>Itu aja. Nggak ada dependency lain yang hidup di production.</p>
+<h3>Gimana caranya jalan?</h3>
+<p>Di root ada satu file aja yang jadi jantungannya: <code>build.py</code>.</p>
+<p>Jalankan <code>python3 build.py</code>, lalu kira-kira begini prosesnya:</p>
+<ol>
+<li>Baca <code>config.json</code> → nama situs, bio singkat, link sosmed, dll.</li>
+<li>Ambil template utama dari <code>templates/base.html</code></li>
+<li>Scan seluruh file di folder <code>content/</code> yang berakhiran <code>.md</code></li>
+<li>Tiap file Markdown: ambil frontmatter-nya (judul, tanggal, featured atau nggak), konversi isi ke HTML</li>
+<li>Gabungin semuanya ke template → jadi satu file HTML utuh</li>
+<li>Simpan ke folder output</li>
+</ol>
+<p>Selesai dalam 1–3 detik. Nggak ada hot-reload yang muter-muter, nggak ada config bundler yang bikin kepala cenat-cenut.</p>
+<h3>Templatingnya ala kadarnya</h3>
+<p>Nggak pakai Jinja, nggak pakai Mustache, apalagi library aneh-aneh. Cukup <code>str.replace()</code> doang.</p>
+<p>Contoh potongan kodenya kira-kira begini:</p>
+<pre><code class="language-python">def render_page(title, content_html, active_nav=''):
+    html = base_template  # ini string panjang dari base.html
+    html = html.replace('{{SITE_NAME}}', config['site_name'])
+    html = html.replace('{{PAGE_TITLE}}', title)
+    html = html.replace('{{CONTENT}}', content_html)
+    # ... beberapa replace lain untuk nav, footer, dsb
+    return html
+</code></pre>
+<p>Sederhana? Banget. Tapi cukup lah kalo cuma buat website personal gini.</p>
+<h2>Nulis artikelnya gampang</h2>
+<p>Tiap tulisan tinggal bikin file .md baru di folder content/. Formatnya standar:</p>
+<pre><code>---
+title: Judul yang Bikin Penasaran
+date: February 22, 2026
+featured: true
+---
+
+Isi ceritanya di sini. Bisa pake heading, list, 
+code block, gambar, apa aja yang Markdown dukung.
+</code></pre>
+<p>Kalau kasih <code>featured: true</code>, otomatis muncul di bagian “Selected Writings” di homepage. Kalau nggak, ya cuma nongol di halaman <code>/writing</code>. Simple.</p>
+<h2>Hasil akhirnya?</h2>
+<p>Folder berisi file <code>.html</code> statis polos. Bisa di-deploy ke mana aja:</p>
+<ul>
+<li>GitHub Pages Netlify / Vercel / Cloudflare Pages (gratis)</li>
+<li>Hosting murah biasa</li>
+<li>Bahkan router wifi juga bisa</li>
+</ul>
+<p>Nggak butuh server, nggak butuh database, nggak butuh runtime apapun.</p>
+<hr />
+<p>Mungkin kedengeran jadul, tapi justru itu poinnya.
+Website ini kemungkinan besar masih bisa dibuka 10–15 tahun lagi selama browser masih ada. Nggak ada framework yang tiba-tiba deprecated, nggak ada breaking change di versi baru, nggak ada “npm install” yang gagal karena dependency mati.
+Kadang pendekatan paling sederhana emang yang paling bandel dan awet.</p>
+<hr />
+<p>Selanjutnya aku bakal ceritain gimana cara hosting website ini di Cloudflare Pages.</p>
+                </div>
+            </article>
+            <footer class="footer-layout">
+                <div class="footer-socials">
+                    <a href="https://www.threads.net/@kchos0" target="_blank" rel="noopener noreferrer">threads <span
+                            style="font-size: 0.8em; margin-left: 0.1em;">&#x2197;</span></a>
+                    <a href="https://github.com/kchos0" target="_blank" rel="noopener noreferrer">github <span
+                            style="font-size: 0.8em; margin-left: 0.1em;">&#x2197;</span></a>
+                </div>
+                <div class="footer-copyright">
+                    built with <span style="color: #e05c5c;">&#x2665;</span> using raw html &middot; &copy;
+                    <script>document.write(new Date().getFullYear())</script> kchos0
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        function applyHljsTheme(isDark) {
+            document.getElementById('hljs-light').disabled = isDark;
+            document.getElementById('hljs-dark').disabled = !isDark;
+        }
+
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+                localStorage.setItem('theme', isDark ? 'light' : 'dark');
+                applyHljsTheme(!isDark);
+            });
+        }
+
+        applyHljsTheme(document.documentElement.getAttribute('data-theme') === 'dark');
+
+        document.querySelectorAll('.article-body pre').forEach(pre => {
+            const code = pre.querySelector('code');
+            if (!code) return;
+
+            hljs.highlightElement(code);
+
+            const langClass = [...code.classList].find(c => c.startsWith('language-'));
+            const lang = langClass ? langClass.replace('language-', '') : 'plaintext';
+
+            const header = document.createElement('div');
+            header.className = 'code-block-header';
+            header.innerHTML = `<span>${lang}</span><button class="code-block-copy">copy</button>`;
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'code-block-wrapper';
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(header);
+            wrapper.appendChild(pre);
+
+            header.querySelector('.code-block-copy').addEventListener('click', function () {
+                navigator.clipboard.writeText(code.innerText).then(() => {
+                    this.textContent = 'copied!';
+                    this.classList.add('copied');
+                    setTimeout(() => {
+                        this.textContent = 'copy';
+                        this.classList.remove('copied');
+                    }, 2000);
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

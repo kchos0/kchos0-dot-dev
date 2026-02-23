@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.sw?
+
+# Node (if any tooling is added)
+node_modules/
