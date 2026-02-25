@@ -1,0 +1,127 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import config from '../../../config.json';
+
+const allArticles = await getCollection('writing');
+
+const sorted = allArticles.sort(
+  (a, b) => Date.parse(b.data.date) - Date.parse(a.data.date)
+);
+
+// Build excerpt from body: first non-empty, non-heading, non-HTML line, strip markdown
+function makeExcerpt(body: string): string {
+  const lines = body.split('\n');
+  for (const line of lines) {
+    const s = line.trim();
+    if (!s || s.startsWith('#') || s.startsWith('<') || s.startsWith('!') || s.startsWith('---')) continue;
+    let excerpt = s
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*(.+?)\*/g, '$1')
+      .replace(/_(.+?)_/g, '$1')
+      .replace(/`(.+?)`/g, '$1');
+    if (excerpt.length > 160) excerpt = excerpt.slice(0, 157) + '...';
+    return excerpt;
+  }
+  return '';
+}
+---
+
+<BaseLayout title={`${config.site_name} — writing`} activeNav="writing">
+  <section class="intro-section">
+    <h1 class="hero-title">writing.</h1>
+    <p class="intro-subtitle">
+      koleksi personal notes ku dan hal menarik lainnya.
+    </p>
+  </section>
+
+  <section class="list-section">
+    <ul class="clean-list">
+      {sorted.length > 0 ? sorted.map((article) => (
+        <li>
+          <a href={`/writing/${article.id}`} class="list-link">
+            <span class="list-meta date-meta">{article.data.date}</span>
+            <span class="list-title article-title">{article.data.title}</span>
+            <p class="excerpt">{makeExcerpt(article.body ?? '')}</p>
+          </a>
+        </li>
+      )) : (
+        <li>
+          <div class="list-link" style="border-bottom: none;">
+            <span class="list-meta" style="font-style: italic;">no writings published yet.</span>
+          </div>
+        </li>
+      )}
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .intro-section {
+    margin-bottom: var(--space-md);
+  }
+
+  @media (min-width: 768px) {
+    .intro-section {
+      margin-bottom: var(--space-lg);
+    }
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin-bottom: var(--space-sm);
+  }
+
+  .intro-subtitle {
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+  }
+
+  .list-section {
+    margin-bottom: var(--space-lg);
+  }
+
+  .clean-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .list-link {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.5rem 0;
+    border-bottom: 1px dashed var(--border-color);
+  }
+
+  .list-link:hover {
+    border-bottom-style: solid;
+    border-bottom-color: var(--text-main);
+  }
+
+  .date-meta {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .article-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+    transition: padding 0.2s ease;
+  }
+
+  .list-link:hover .article-title {
+    padding-left: 0.5rem;
+  }
+
+  .excerpt {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+</style>

@@ -1,0 +1,293 @@
+---
+import '../styles/global.css';
+import config from '../../config.json';
+
+interface Props {
+  title: string;
+  description?: string;
+  activeNav?: 'index' | 'writing' | 'projects';
+  hasCode?: boolean;
+}
+
+const {
+  title,
+  description = config.description,
+  activeNav,
+  hasCode = false,
+} = Astro.props;
+
+const year = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <!-- Prevent flash of wrong theme -->
+    <script is:inline>
+      const svdTheme = localStorage.getItem('theme');
+      if (svdTheme) document.documentElement.setAttribute('data-theme', svdTheme);
+      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+    {hasCode && (
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+        id="hljs-light"
+      />
+      <script
+        is:inline
+        src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+      ></script>
+    )}
+  </head>
+
+  <body>
+    <div class="site-wrapper">
+      <aside class="sidebar">
+        <div class="brand">
+          <h1><a href="/">{config.site_name}</a></h1>
+        </div>
+        <nav class="nav-vertical">
+          <a href="/" class={activeNav === 'index' ? 'active' : ''}>index</a>
+          <a href="/writing" class={activeNav === 'writing' ? 'active' : ''}>writing</a>
+          <a href="/projects" class={activeNav === 'projects' ? 'active' : ''}>projects</a>
+          <button
+            id="theme-toggle"
+            aria-label="Toggle Dark Mode"
+          >◑</button>
+        </nav>
+      </aside>
+
+      <main class="content-area">
+        <slot />
+        <footer class="footer-layout">
+          <div class="footer-socials">
+            <a href={config.threads_link} target="_blank" rel="noopener noreferrer">
+              threads <span class="ext-icon">&#x2197;</span>
+            </a>
+            <a href={config.github_link} target="_blank" rel="noopener noreferrer">
+              github <span class="ext-icon">&#x2197;</span>
+            </a>
+          </div>
+          <div class="footer-copyright">
+            made with <span class="heart">❤️</span> &middot; &copy;
+            {year} {config.author}
+          </div>
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      const toggleBtn = document.getElementById('theme-toggle');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+          const nextTheme = isDark ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', nextTheme);
+          localStorage.setItem('theme', nextTheme);
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  /* Layout */
+  .site-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  @media (min-width: 768px) {
+    .site-wrapper {
+      flex-direction: row;
+      padding: var(--space-xl) var(--space-lg);
+      gap: var(--space-xl);
+      align-items: flex-start;
+    }
+  }
+
+  /* Sidebar */
+  .sidebar {
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.75rem var(--space-sm);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  @media (min-width: 768px) {
+    .sidebar {
+      display: block;
+      width: 200px;
+      position: sticky;
+      top: var(--space-xl);
+      border-bottom: none;
+      padding: 0;
+      background-color: transparent;
+    }
+  }
+
+  .brand {
+    margin-bottom: 0;
+  }
+
+  @media (min-width: 768px) {
+    .brand {
+      margin-bottom: var(--space-md);
+    }
+  }
+
+  .brand h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  @media (min-width: 768px) {
+    .brand h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.2rem;
+    }
+  }
+
+  .brand a {
+    color: inherit;
+  }
+
+  .nav-vertical {
+    display: flex;
+    flex-direction: row;
+    gap: 1.25rem;
+    align-items: center;
+    margin-bottom: 0;
+    font-size: 0.9rem;
+  }
+
+  @media (min-width: 768px) {
+    .nav-vertical {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: var(--space-md);
+      font-size: 0.95rem;
+    }
+  }
+
+  .nav-vertical a {
+    color: var(--text-muted);
+  }
+
+  .nav-vertical a.active,
+  .nav-vertical a:hover {
+    color: var(--text-main);
+  }
+
+  @media (max-width: 767px) {
+    .nav-vertical a.active::before {
+      content: '';
+    }
+
+    .nav-vertical a.active {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .nav-vertical a.active::before {
+      content: '→ ';
+    }
+  }
+
+  #theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+
+  #theme-toggle:hover {
+    opacity: 1;
+  }
+
+  @media (min-width: 768px) {
+    #theme-toggle {
+      margin-top: 0.5rem;
+    }
+  }
+
+  /* Content area */
+  .content-area {
+    flex-grow: 1;
+    max-width: 600px;
+    min-width: 0;
+    padding: var(--space-md) var(--space-sm);
+  }
+
+  @media (min-width: 768px) {
+    .content-area {
+      padding: 0;
+    }
+  }
+
+  /* Footer */
+  .footer-layout {
+    margin-top: var(--space-xl);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding-top: var(--space-sm);
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  @media (min-width: 768px) {
+    .footer-layout {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border-color);
+    }
+  }
+
+  .footer-socials {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .footer-socials a:hover,
+  .footer-copyright {
+    color: var(--text-main);
+  }
+
+  .ext-icon {
+    font-size: 0.8em;
+    margin-left: 0.1em;
+  }
+
+  .heart {
+    color: #e05c5c;
+  }
+</style>

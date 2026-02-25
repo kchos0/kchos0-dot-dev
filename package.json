@@ -1,0 +1,18 @@
+{
+  "name": "personal-web",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "tinacms dev -c \"astro dev\"",
+    "build": "tinacms build && astro build",
+    "build:ci": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@tinacms/cli": "^2.1.7",
+    "astro": "^5.0.0",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
+    "tinacms": "^3.5.1"
+  }
+}
