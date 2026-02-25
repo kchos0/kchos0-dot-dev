@@ -21,6 +21,8 @@ function dateShort(dateStr: string): string {
 ---
 
 <BaseLayout title={`${config.site_name} — index`} activeNav="index">
+  <h1 class="sr-only">{config.site_name}</h1>
+
   <section class="list-section">
     <h2 class="section-title">latest notes</h2>
     <ul class="clean-list">
@@ -32,10 +34,8 @@ function dateShort(dateStr: string): string {
           </a>
         </li>
       )) : (
-        <li>
-          <div class="list-link" style="border-bottom: none;">
-            <span class="list-meta" style="font-style: italic;">no writings published yet.</span>
-          </div>
+        <li class="empty-item">
+          <span class="list-meta" style="font-style: italic;">no writings published yet.</span>
         </li>
       )}
     </ul>
@@ -52,10 +52,8 @@ function dateShort(dateStr: string): string {
           </a>
         </li>
       )) : (
-        <li>
-          <div class="list-link project-link" style="border-bottom: none;">
-            <span class="list-meta" style="font-style: italic;">no featured writings yet.</span>
-          </div>
+        <li class="empty-item">
+          <span class="list-meta" style="font-style: italic;">no featured writings yet.</span>
         </li>
       )}
     </ul>
@@ -63,6 +61,18 @@ function dateShort(dateStr: string): string {
 </BaseLayout>
 
 <style>
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
   .intro-section {
     margin-bottom: var(--space-md);
   }
@@ -134,5 +144,9 @@ function dateShort(dateStr: string): string {
     font-size: 0.85rem;
     color: var(--text-muted);
     white-space: nowrap;
+  }
+
+  .empty-item {
+    padding: 0.8rem 0;
   }
 </style>

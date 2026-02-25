@@ -6,17 +6,18 @@ interface Props {
   title: string;
   description?: string;
   activeNav?: 'index' | 'writing' | 'projects';
-  hasCode?: boolean;
+  ogType?: 'website' | 'article';
 }
 
 const {
   title,
   description = config.description,
   activeNav,
-  hasCode = false,
+  ogType = 'website',
 } = Astro.props;
 
 const year = new Date().getFullYear();
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
@@ -26,39 +27,47 @@ const year = new Date().getFullYear();
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:site_name" content={config.site_name} />
+
+    <!-- Twitter/X Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
     <!-- Prevent flash of wrong theme -->
     <script is:inline>
-      const svdTheme = localStorage.getItem('theme');
-      if (svdTheme) document.documentElement.setAttribute('data-theme', svdTheme);
-      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
-        document.documentElement.setAttribute('data-theme', 'dark');
+      try {
+        const svdTheme = localStorage.getItem('theme');
+        if (svdTheme) document.documentElement.setAttribute('data-theme', svdTheme);
+        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (_) {}
     </script>
-    {hasCode && (
-      <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
-        id="hljs-light"
-      />
-      <script
-        is:inline
-        src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
-      ></script>
-    )}
   </head>
 
   <body>
     <div class="site-wrapper">
-      <aside class="sidebar">
+      <aside class="sidebar" aria-label="Site sidebar">
         <div class="brand">
-          <h1><a href="/">{config.site_name}</a></h1>
+          <p class="brand-name"><a href="/">{config.site_name}</a></p>
         </div>
-        <nav class="nav-vertical">
+        <nav class="nav-vertical" aria-label="Main navigation">
           <a href="/" class={activeNav === 'index' ? 'active' : ''}>index</a>
           <a href="/writing" class={activeNav === 'writing' ? 'active' : ''}>writing</a>
           <a href="/projects" class={activeNav === 'projects' ? 'active' : ''}>projects</a>
           <button
             id="theme-toggle"
-            aria-label="Toggle Dark Mode"
+            aria-label="Toggle dark mode"
           >◑</button>
         </nav>
       </aside>
@@ -68,14 +77,14 @@ const year = new Date().getFullYear();
         <footer class="footer-layout">
           <div class="footer-socials">
             <a href={config.threads_link} target="_blank" rel="noopener noreferrer">
-              threads <span class="ext-icon">&#x2197;</span>
+              threads <span class="ext-icon" aria-hidden="true">&#x2197;</span>
             </a>
             <a href={config.github_link} target="_blank" rel="noopener noreferrer">
-              github <span class="ext-icon">&#x2197;</span>
+              github <span class="ext-icon" aria-hidden="true">&#x2197;</span>
             </a>
           </div>
           <div class="footer-copyright">
-            made with <span class="heart">❤️</span> &middot; &copy;
+            made with <span class="heart" aria-hidden="true">❤️</span> &middot; &copy;
             {year} {config.author}
           </div>
         </footer>
@@ -89,7 +98,7 @@ const year = new Date().getFullYear();
           const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
           const nextTheme = isDark ? 'light' : 'dark';
           document.documentElement.setAttribute('data-theme', nextTheme);
-          localStorage.setItem('theme', nextTheme);
+          try { localStorage.setItem('theme', nextTheme); } catch (_) {}
         });
       }
     </script>
@@ -151,14 +160,14 @@ const year = new Date().getFullYear();
     }
   }
 
-  .brand h1 {
+  .brand-name {
     font-size: 1.1rem;
     font-weight: 600;
     letter-spacing: -0.02em;
   }
 
   @media (min-width: 768px) {
-    .brand h1 {
+    .brand-name {
       font-size: 1.5rem;
       margin-bottom: 0.2rem;
     }

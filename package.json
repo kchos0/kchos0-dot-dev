@@ -12,6 +12,7 @@
     "astro": "^5.0.0"
   },
   "devDependencies": {
+    "@astrojs/sitemap": "^3.7.0",
     "@tinacms/cli": "^2.1.7",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",

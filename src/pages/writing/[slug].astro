@@ -14,25 +14,21 @@ export async function getStaticPaths() {
 const { article } = Astro.props;
 const { Content } = await render(article);
 
-// Detect code blocks to conditionally load highlight.js
-// We render to string to check, but Astro doesn't expose raw HTML pre-render.
-// Instead, check the raw markdown body for fenced code blocks.
-const hasCode = /```/.test(article.body ?? '');
+// Convert "February 22, 2026" → "2026-02-22" for datetime attribute
+const dateISO = new Date(article.data.date).toISOString().slice(0, 10);
 ---
 
 <BaseLayout
   title={`${article.data.title} — ${config.site_name}`}
   description={article.data.title}
   activeNav="writing"
-  hasCode={hasCode}
 >
-  <br />
   <a href="/writing" class="back-link">&larr; back to writing</a>
 
   <article>
     <header class="article-header">
       <h1 class="article-title">{article.data.title}</h1>
-      <time class="article-date">{article.data.date}</time>
+      <time class="article-date" datetime={dateISO}>{article.data.date}</time>
     </header>
 
     <div class="article-body">
@@ -41,80 +37,30 @@ const hasCode = /```/.test(article.body ?? '');
   </article>
 </BaseLayout>
 
-{hasCode && (
-  <script>
-    // Apply correct hljs theme on initial load
-    if (document.documentElement.getAttribute('data-theme') === 'dark') {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.id = 'hljs-dark';
-      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
-      document.head.appendChild(link);
-      const light = document.getElementById('hljs-light') as HTMLLinkElement | null;
-      if (light) light.disabled = true;
-    }
+<script>
+  // Copy button for code blocks
+  document.querySelectorAll('.article-body pre').forEach((pre) => {
+    const btn = document.createElement('button');
+    btn.className = 'code-copy-btn';
+    btn.setAttribute('aria-label', 'Copy code');
+    btn.textContent = 'copy';
 
-    // Wire up theme toggle to also switch hljs stylesheet
-    const toggleBtn = document.getElementById('theme-toggle');
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', () => {
-        // Note: BaseLayout already toggled data-theme before this fires,
-        // so at this point data-theme reflects the NEW theme.
-        const nowDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const light = document.getElementById('hljs-light') as HTMLLinkElement | null;
-        if (nowDark) {
-          let dark = document.getElementById('hljs-dark') as HTMLLinkElement | null;
-          if (!dark) {
-            dark = document.createElement('link');
-            dark.rel = 'stylesheet';
-            dark.id = 'hljs-dark';
-            dark.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
-            document.head.appendChild(dark);
-          } else {
-            dark.disabled = false;
-          }
-          if (light) light.disabled = true;
-        } else {
-          if (light) light.disabled = false;
-          const dark = document.getElementById('hljs-dark') as HTMLLinkElement | null;
-          if (dark) dark.disabled = true;
-        }
-      });
-    }
+    pre.appendChild(btn);
 
-    // Run highlight.js and wrap code blocks with header + copy button
-    document.querySelectorAll('.article-body pre').forEach((pre) => {
+    btn.addEventListener('click', () => {
       const code = pre.querySelector('code');
       if (!code) return;
-
-      (window as any).hljs.highlightElement(code);
-
-      const langClass = [...code.classList].find((c) => c.startsWith('language-'));
-      const lang = langClass ? langClass.replace('language-', '') : 'plaintext';
-
-      const header = document.createElement('div');
-      header.className = 'code-block-header';
-      header.innerHTML = `<span>${lang}</span><button class="code-block-copy">copy</button>`;
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'code-block-wrapper';
-      pre.parentNode!.insertBefore(wrapper, pre);
-      wrapper.appendChild(header);
-      wrapper.appendChild(pre);
-
-      header.querySelector('.code-block-copy')!.addEventListener('click', function (this: HTMLButtonElement) {
-        navigator.clipboard.writeText(code.innerText).then(() => {
-          this.textContent = 'copied!';
-          this.classList.add('copied');
-          setTimeout(() => {
-            this.textContent = 'copy';
-            this.classList.remove('copied');
-          }, 2000);
-        });
+      navigator.clipboard.writeText(code.innerText).then(() => {
+        btn.textContent = 'copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'copy';
+          btn.classList.remove('copied');
+        }, 2000);
       });
     });
-  </script>
-)}
+  });
+</script>
 
 <style>
   .back-link {
@@ -125,6 +71,7 @@ const hasCode = /```/.test(article.body ?? '');
   }
 
   .article-header {
+    margin-top: 1.5rem;
     margin-bottom: var(--space-lg);
   }
 
@@ -203,6 +150,7 @@ const hasCode = /```/.test(article.body ?? '');
     font-style: italic;
   }
 
+  /* Inline code */
   .article-body :global(code) {
     font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
     font-size: 0.85em;
@@ -215,10 +163,11 @@ const hasCode = /```/.test(article.body ?? '');
     background-color: #2a2a2a;
   }
 
+  /* Shiki code blocks — dual theme via CSS vars */
   .article-body :global(pre) {
-    background-color: #f5f5f5;
-    border: 1px solid var(--border-color);
+    position: relative;
     border-radius: 8px;
+    border: 1px solid var(--border-color);
     padding: 1.1rem 1.25rem;
     overflow-x: auto;
     margin-bottom: 1.75rem;
@@ -226,9 +175,13 @@ const hasCode = /```/.test(article.body ?? '');
     line-height: 1.65;
   }
 
-  :global(html[data-theme="dark"]) .article-body :global(pre) {
-    background-color: #1a1a1a;
-    border-color: #2e2e2e;
+  /* Shiki inlines both themes; hide/show based on data-theme */
+  :global(html:not([data-theme="dark"])) .article-body :global(pre .shiki.github-dark) {
+    display: none;
+  }
+
+  :global(html[data-theme="dark"]) .article-body :global(pre .shiki.github-light) {
+    display: none;
   }
 
   .article-body :global(pre code) {
@@ -238,90 +191,51 @@ const hasCode = /```/.test(article.body ?? '');
     font-size: inherit;
   }
 
-  /* Code block wrapper (added by JS) */
-  .article-body :global(.code-block-wrapper) {
+  /* Copy button */
+  .article-body :global(pre) {
     position: relative;
-    margin-bottom: 1.75rem;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid #e0e0e0;
-    font-size: 0.875rem;
   }
 
-  :global(html[data-theme="dark"]) .article-body :global(.code-block-wrapper) {
-    border-color: #2e2e2e;
-  }
-
-  .article-body :global(.code-block-header) {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #e8e8e8;
-    padding: 0.45rem 1rem;
-    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-    font-size: 0.78rem;
-    color: #555;
-    user-select: none;
-  }
-
-  :global(html[data-theme="dark"]) .article-body :global(.code-block-header) {
-    background-color: #252525;
-    color: #888;
-  }
-
-  .article-body :global(.code-block-copy) {
+  .article-body :global(.code-copy-btn) {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.6rem;
     background: none;
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 0.2rem 0.55rem;
     font-size: 0.72rem;
-    font-family: inherit;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
     color: #555;
     cursor: pointer;
     transition: all 0.15s ease;
     line-height: 1.4;
+    opacity: 0;
+    transition: opacity 0.15s ease;
   }
 
-  :global(html[data-theme="dark"]) .article-body :global(.code-block-copy) {
+  .article-body :global(pre:hover .code-copy-btn) {
+    opacity: 1;
+  }
+
+  :global(html[data-theme="dark"]) .article-body :global(.code-copy-btn) {
     border-color: #444;
     color: #888;
   }
 
-  .article-body :global(.code-block-copy:hover) {
+  .article-body :global(.code-copy-btn:hover) {
     background-color: #d0d0d0;
     color: #222;
   }
 
-  :global(html[data-theme="dark"]) .article-body :global(.code-block-copy:hover) {
+  :global(html[data-theme="dark"]) .article-body :global(.code-copy-btn:hover) {
     background-color: #333;
     color: #ddd;
   }
 
-  .article-body :global(.code-block-copy.copied) {
+  .article-body :global(.code-copy-btn.copied) {
     color: #2d8a4e;
     border-color: #2d8a4e;
-  }
-
-  .article-body :global(.code-block-wrapper pre) {
-    margin-bottom: 0;
-    border: none;
-    border-radius: 0;
-    background-color: #f7f7f7;
-    padding: 1rem 1.25rem;
-    overflow-x: auto;
-    line-height: 1.65;
-    white-space: pre;
-  }
-
-  :global(html[data-theme="dark"]) .article-body :global(.code-block-wrapper pre) {
-    background-color: #1a1a1a;
-  }
-
-  .article-body :global(.code-block-wrapper pre code.hljs) {
-    background: none;
-    padding: 0;
-    border-radius: 0;
-    font-size: inherit;
-    white-space: pre;
+    opacity: 1;
   }
 </style>

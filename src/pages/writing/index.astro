@@ -46,10 +46,8 @@ function makeExcerpt(body: string): string {
           </a>
         </li>
       )) : (
-        <li>
-          <div class="list-link" style="border-bottom: none;">
-            <span class="list-meta" style="font-style: italic;">no writings published yet.</span>
-          </div>
+        <li class="empty-item">
+          <span class="list-meta" style="font-style: italic;">no writings published yet.</span>
         </li>
       )}
     </ul>
@@ -123,5 +121,9 @@ function makeExcerpt(body: string): string {
     color: var(--text-muted);
     font-size: 0.95rem;
     line-height: 1.6;
+  }
+
+  .empty-item {
+    padding: 1.5rem 0;
   }
 </style>
