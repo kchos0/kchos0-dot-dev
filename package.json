@@ -9,8 +9,10 @@
     "preview": "astro preview"
   },
   "dependencies": {
+    "astro": "^5.0.0"
+  },
+  "devDependencies": {
     "@tinacms/cli": "^2.1.7",
-    "astro": "^5.0.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "tinacms": "^3.5.1"
