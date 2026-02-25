@@ -14,3 +14,9 @@ __pycache__/
 
 # Node (if any tooling is added)
 node_modules/
+
+# TinaCMS
+node_modules/
+.tina/
+tina/__generated__/
+admin/

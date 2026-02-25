@@ -1,0 +1,31 @@
+{
+  "name": "personal-web",
+  "version": "1.0.0",
+  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "run-p dev:tina watch:content",
+    "dev:tina": "tinacms dev -c \"python3 -m http.server 8000\"",
+    "watch:content": "chokidar \"content/**/*.md\" -c \"./scripts/auto-push.sh\" --initial"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kchos0/personal-portofolio.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kchos0/personal-portofolio/issues"
+  },
+  "homepage": "https://github.com/kchos0/personal-portofolio#readme",
+  "dependencies": {
+    "@tinacms/cli": "^2.1.7",
+    "tinacms": "^3.5.1"
+  },
+  "devDependencies": {
+    "chokidar-cli": "^3.0.0",
+    "npm-run-all": "^4.1.5"
+  }
+}
