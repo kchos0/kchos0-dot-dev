@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import config from '../../../config.json';
+import { formatDate } from '../../utils/date';
 
 const allArticles = await getCollection('writing');
 
@@ -31,7 +32,7 @@ function makeExcerpt(body: string): string {
   <section class="intro-section">
     <h1 class="hero-title">writing.</h1>
     <p class="intro-subtitle">
-      koleksi personal notes ku dan hal menarik lainnya.
+      my personal notes and interesting things.
     </p>
   </section>
 
@@ -40,7 +41,7 @@ function makeExcerpt(body: string): string {
       {sorted.length > 0 ? sorted.map((article) => (
         <li>
           <a href={`/writing/${article.id}`} class="list-link">
-            <span class="list-meta date-meta">{article.data.date}</span>
+            <span class="list-meta date-meta">{formatDate(article.data.date)}</span>
             <span class="list-title article-title">{article.data.title}</span>
             <p class="excerpt">{makeExcerpt(article.body ?? '')}</p>
           </a>

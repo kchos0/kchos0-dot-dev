@@ -1,6 +1,8 @@
 ---
 import '../styles/global.css';
-import config from '../../config.json';
+import BaseHead from '../components/BaseHead.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Footer from '../components/Footer.astro';
 
 interface Props {
   title: string;
@@ -11,102 +13,33 @@ interface Props {
 
 const {
   title,
-  description = config.description,
+  description,
   activeNav,
-  ogType = 'website',
+  ogType,
 } = Astro.props;
 
-const year = new Date().getFullYear();
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    <link rel="canonical" href={canonicalURL} />
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-
-    <!-- Open Graph -->
-    <meta property="og:type" content={ogType} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonicalURL} />
-    <meta property="og:site_name" content={config.site_name} />
-
-    <!-- Twitter/X Card -->
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
-
-    <!-- Prevent flash of wrong theme -->
-    <script is:inline>
-      try {
-        const svdTheme = localStorage.getItem('theme');
-        if (svdTheme) document.documentElement.setAttribute('data-theme', svdTheme);
-        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
-          document.documentElement.setAttribute('data-theme', 'dark');
-      } catch (_) {}
-    </script>
+    <BaseHead title={title} description={description} ogType={ogType} canonicalURL={canonicalURL} />
   </head>
 
   <body>
     <div class="site-wrapper">
-      <aside class="sidebar" aria-label="Site sidebar">
-        <div class="brand">
-          <p class="brand-name"><a href="/">{config.site_name}</a></p>
-        </div>
-        <nav class="nav-vertical" aria-label="Main navigation">
-          <a href="/" class={activeNav === 'index' ? 'active' : ''}>index</a>
-          <a href="/writing" class={activeNav === 'writing' ? 'active' : ''}>writing</a>
-          <a href="/projects" class={activeNav === 'projects' ? 'active' : ''}>projects</a>
-          <button
-            id="theme-toggle"
-            aria-label="Toggle dark mode"
-          >◑</button>
-        </nav>
-      </aside>
+      <Sidebar activeNav={activeNav} />
 
       <main class="content-area">
         <slot />
-        <footer class="footer-layout">
-          <div class="footer-socials">
-            <a href={config.threads_link} target="_blank" rel="noopener noreferrer">
-              threads <span class="ext-icon" aria-hidden="true">&#x2197;</span>
-            </a>
-            <a href={config.github_link} target="_blank" rel="noopener noreferrer">
-              github <span class="ext-icon" aria-hidden="true">&#x2197;</span>
-            </a>
-          </div>
-          <div class="footer-copyright">
-            made with <span class="heart" aria-hidden="true">❤️</span> &middot; &copy;
-            {year} {config.author}
-          </div>
-        </footer>
+        <Footer />
       </main>
     </div>
-
-    <script>
-      const toggleBtn = document.getElementById('theme-toggle');
-      if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-          const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-          const nextTheme = isDark ? 'light' : 'dark';
-          document.documentElement.setAttribute('data-theme', nextTheme);
-          try { localStorage.setItem('theme', nextTheme); } catch (_) {}
-        });
-      }
-    </script>
   </body>
 </html>
 
 <style>
-  /* Layout */
   .site-wrapper {
     max-width: 1000px;
     margin: 0 auto;
@@ -123,130 +56,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     }
   }
 
-  /* Sidebar */
-  .sidebar {
-    flex-shrink: 0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: var(--bg-color);
-    border-bottom: 1px solid var(--border-color);
-    padding: 0.75rem var(--space-sm);
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  @media (min-width: 768px) {
-    .sidebar {
-      display: block;
-      width: 200px;
-      position: sticky;
-      top: var(--space-xl);
-      border-bottom: none;
-      padding: 0;
-      background-color: transparent;
-    }
-  }
-
-  .brand {
-    margin-bottom: 0;
-  }
-
-  @media (min-width: 768px) {
-    .brand {
-      margin-bottom: var(--space-md);
-    }
-  }
-
-  .brand-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-  }
-
-  @media (min-width: 768px) {
-    .brand-name {
-      font-size: 1.5rem;
-      margin-bottom: 0.2rem;
-    }
-  }
-
-  .brand a {
-    color: inherit;
-  }
-
-  .nav-vertical {
-    display: flex;
-    flex-direction: row;
-    gap: 1.25rem;
-    align-items: center;
-    margin-bottom: 0;
-    font-size: 0.9rem;
-  }
-
-  @media (min-width: 768px) {
-    .nav-vertical {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.5rem;
-      margin-bottom: var(--space-md);
-      font-size: 0.95rem;
-    }
-  }
-
-  .nav-vertical a {
-    color: var(--text-muted);
-  }
-
-  .nav-vertical a.active,
-  .nav-vertical a:hover {
-    color: var(--text-main);
-  }
-
-  @media (max-width: 767px) {
-    .nav-vertical a.active::before {
-      content: '';
-    }
-
-    .nav-vertical a.active {
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-  }
-
-  @media (min-width: 768px) {
-    .nav-vertical a.active::before {
-      content: '→ ';
-    }
-  }
-
-  #theme-toggle {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-muted);
-    text-align: left;
-    padding: 0;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-  }
-
-  #theme-toggle:hover {
-    opacity: 1;
-  }
-
-  @media (min-width: 768px) {
-    #theme-toggle {
-      margin-top: 0.5rem;
-    }
-  }
-
-  /* Content area */
   .content-area {
     flex-grow: 1;
     max-width: 600px;
@@ -258,45 +67,5 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     .content-area {
       padding: 0;
     }
-  }
-
-  /* Footer */
-  .footer-layout {
-    margin-top: var(--space-xl);
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    padding-top: var(--space-sm);
-    border-top: 1px dashed var(--border-color);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  @media (min-width: 768px) {
-    .footer-layout {
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      border-top: 1px solid var(--border-color);
-    }
-  }
-
-  .footer-socials {
-    display: flex;
-    gap: 1.5rem;
-  }
-
-  .footer-socials a:hover,
-  .footer-copyright {
-    color: var(--text-main);
-  }
-
-  .ext-icon {
-    font-size: 0.8em;
-    margin-left: 0.1em;
-  }
-
-  .heart {
-    color: #e05c5c;
   }
 </style>

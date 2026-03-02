@@ -1,0 +1,160 @@
+---
+import config from '../../config.json';
+
+interface Props {
+  activeNav?: 'index' | 'writing' | 'projects';
+}
+
+const { activeNav } = Astro.props;
+---
+
+<aside class="sidebar" aria-label="Site sidebar">
+  <div class="brand">
+    <p class="brand-name"><a href="/">{config.site_name}</a></p>
+  </div>
+  <nav class="nav-vertical" aria-label="Main navigation">
+    <a href="/" class={activeNav === 'index' ? 'active' : ''}>index</a>
+    <a href="/writing" class={activeNav === 'writing' ? 'active' : ''}>writing</a>
+    <a href="/projects" class={activeNav === 'projects' ? 'active' : ''}>projects</a>
+    <button
+      id="theme-toggle"
+      aria-label="Toggle dark mode"
+    >◑</button>
+  </nav>
+</aside>
+
+<script>
+  const toggleBtn = document.getElementById('theme-toggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const nextTheme = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', nextTheme);
+      try { localStorage.setItem('theme', nextTheme); } catch (_) {}
+    });
+  }
+</script>
+
+<style>
+  .sidebar {
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.75rem var(--space-sm);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  @media (min-width: 768px) {
+    .sidebar {
+      display: block;
+      width: 200px;
+      position: sticky;
+      top: var(--space-xl);
+      border-bottom: none;
+      padding: 0;
+      background-color: transparent;
+    }
+  }
+
+  .brand {
+    margin-bottom: 0;
+  }
+
+  @media (min-width: 768px) {
+    .brand {
+      margin-bottom: var(--space-md);
+    }
+  }
+
+  .brand-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  @media (min-width: 768px) {
+    .brand-name {
+      font-size: 1.5rem;
+      margin-bottom: 0.2rem;
+    }
+  }
+
+  .brand a {
+    color: inherit;
+  }
+
+  .nav-vertical {
+    display: flex;
+    flex-direction: row;
+    gap: 1.25rem;
+    align-items: center;
+    margin-bottom: 0;
+    font-size: 0.9rem;
+  }
+
+  @media (min-width: 768px) {
+    .nav-vertical {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: var(--space-md);
+      font-size: 0.95rem;
+    }
+  }
+
+  .nav-vertical a {
+    color: var(--text-muted);
+  }
+
+  .nav-vertical a.active,
+  .nav-vertical a:hover {
+    color: var(--text-main);
+  }
+
+  @media (max-width: 767px) {
+    .nav-vertical a.active::before {
+      content: '';
+    }
+
+    .nav-vertical a.active {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .nav-vertical a.active::before {
+      content: '→ ';
+    }
+  }
+
+  #theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+
+  #theme-toggle:hover {
+    opacity: 1;
+  }
+
+  @media (min-width: 768px) {
+    #theme-toggle {
+      margin-top: 0.5rem;
+    }
+  }
+</style>

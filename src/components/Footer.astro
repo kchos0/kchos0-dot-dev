@@ -1,0 +1,61 @@
+---
+import config from '../../config.json';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="footer-layout">
+  <div class="footer-socials">
+    <a href={config.threads_link} target="_blank" rel="noopener noreferrer">
+      threads <span class="ext-icon" aria-hidden="true">&#x2197;</span>
+    </a>
+    <a href={config.github_link} target="_blank" rel="noopener noreferrer">
+      github <span class="ext-icon" aria-hidden="true">&#x2197;</span>
+    </a>
+  </div>
+  <div class="footer-copyright">
+    made with <span class="heart" aria-hidden="true">❤️</span> &middot; &copy;
+    {year} {config.author}
+  </div>
+</footer>
+
+<style>
+  .footer-layout {
+    margin-top: var(--space-xl);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding-top: var(--space-sm);
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  @media (min-width: 768px) {
+    .footer-layout {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border-color);
+    }
+  }
+
+  .footer-socials {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .footer-socials a:hover,
+  .footer-copyright {
+    color: var(--text-main);
+  }
+
+  .ext-icon {
+    font-size: 0.8em;
+    margin-left: 0.1em;
+  }
+
+  .heart {
+    color: #e05c5c;
+  }
+</style>

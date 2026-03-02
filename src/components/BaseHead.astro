@@ -1,0 +1,48 @@
+---
+import config from '../../config.json';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogType?: 'website' | 'article';
+  canonicalURL: URL;
+}
+
+const {
+  title,
+  description = config.description,
+  ogType = 'website',
+  canonicalURL,
+} = Astro.props;
+---
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL} />
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+<!-- Open Graph -->
+<meta property="og:type" content={ogType} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:site_name" content={config.site_name} />
+
+<!-- Twitter/X Card -->
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+
+<!-- Prevent flash of wrong theme -->
+<script is:inline>
+  try {
+    const svdTheme = localStorage.getItem('theme');
+    if (svdTheme) document.documentElement.setAttribute('data-theme', svdTheme);
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      document.documentElement.setAttribute('data-theme', 'dark');
+  } catch (_) {}
+</script>

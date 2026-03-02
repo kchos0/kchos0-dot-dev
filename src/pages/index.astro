@@ -2,22 +2,16 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import config from '../../config.json';
+import { formatDate } from '../utils/date';
 
 const allArticles = await getCollection('writing');
 
-// Sort by date descending (parse "February 22, 2026" → timestamp)
 const sorted = allArticles.sort(
   (a, b) => Date.parse(b.data.date) - Date.parse(a.data.date)
 );
 
 const latest = sorted.slice(0, 3);
 const featured = sorted.filter((a) => a.data.featured);
-
-// Format date to short form: "feb '26"
-function dateShort(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }).toLowerCase().replace(' ', " '");
-}
 ---
 
 <BaseLayout title={`${config.site_name} — index`} activeNav="index">
@@ -30,7 +24,7 @@ function dateShort(dateStr: string): string {
         <li>
           <a href={`/writing/${article.id}`} class="list-link">
             <span class="list-title">{article.data.title}</span>
-            <span class="list-meta">{dateShort(article.data.date)}</span>
+            <span class="list-meta">{formatDate(article.data.date, { month: 'short', year: '2-digit' })}</span>
           </a>
         </li>
       )) : (
@@ -48,7 +42,7 @@ function dateShort(dateStr: string): string {
         <li>
           <a href={`/writing/${article.id}`} class="list-link">
             <span class="list-title">{article.data.title}</span>
-            <span class="list-meta">{dateShort(article.data.date)}</span>
+            <span class="list-meta">{formatDate(article.data.date, { month: 'short', year: '2-digit' })}</span>
           </a>
         </li>
       )) : (
