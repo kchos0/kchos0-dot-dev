@@ -5,6 +5,9 @@ export default defineConfig({
   site: 'https://kchos0.dev',
   output: 'static',
   integrations: [sitemap()],
+  build: {
+    inlineStylesheets: 'always',
+  },
   markdown: {
     syntaxHighlight: 'shiki',
     shikiConfig: {
