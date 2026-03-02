@@ -4,8 +4,8 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "tinacms dev -c \"astro dev\"",
-    "build": "tinacms build && astro build && npx pagefind --site dist",
-    "build:ci": "astro build && npx pagefind --site dist",
+    "build": "tinacms build && astro build",
+    "build:ci": "astro build",
     "preview": "astro preview"
   },
   "dependencies": {
