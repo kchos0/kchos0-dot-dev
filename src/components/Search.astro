@@ -1,0 +1,40 @@
+---
+// Pagefind search UI component.
+// Functional only after running `npm run build` — Pagefind indexes the static output.
+// During `npm run dev`, the search box will be visible but non-functional.
+---
+
+<div id="pagefind-search" class="search-wrapper"></div>
+
+<link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+<script src="/pagefind/pagefind-ui.js" is:inline></script>
+<script>
+  // Initialise Pagefind UI after the page is ready.
+  // PagefindUI is injected at runtime by /pagefind/pagefind-ui.js (generated after build).
+  window.addEventListener('DOMContentLoaded', () => {
+    const PF = (window as unknown as Record<string, unknown>)['PagefindUI'] as
+      | (new (opts: Record<string, unknown>) => void)
+      | undefined;
+    if (typeof PF === 'function') {
+      new PF({ element: '#pagefind-search', showSubResults: true, showImages: false });
+    }
+  });
+</script>
+
+<style>
+  .search-wrapper {
+    margin-bottom: var(--space-lg);
+  }
+
+  /* Override Pagefind UI colors to match the site's CSS custom properties */
+  :global(#pagefind-search) {
+    --pagefind-ui-scale: 0.9;
+    --pagefind-ui-primary: var(--text-main);
+    --pagefind-ui-text: var(--text-main);
+    --pagefind-ui-background: var(--bg-main);
+    --pagefind-ui-border: var(--border-color);
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: 4px;
+    --pagefind-ui-font: var(--font-sans);
+  }
+</style>

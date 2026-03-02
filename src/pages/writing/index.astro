@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import config from '../../../config.json';
 import { formatDate } from '../../utils/date';
+import Search from '../../components/Search.astro';
 
 const allArticles = await getCollection('writing');
 
@@ -35,6 +36,8 @@ function makeExcerpt(body: string): string {
       my personal notes and interesting things.
     </p>
   </section>
+
+  <Search />
 
   <section class="list-section">
     <ul class="clean-list">

@@ -6,9 +6,9 @@ import Footer from '../components/Footer.astro';
 
 interface Props {
   title: string;
-  description?: string;
-  activeNav?: 'index' | 'writing' | 'projects';
-  ogType?: 'website' | 'article';
+  description?: string | undefined;
+  activeNav?: 'index' | 'writing' | 'projects' | undefined;
+  ogType?: 'website' | 'article' | undefined;
 }
 
 const {
@@ -25,13 +25,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 <html lang="en">
   <head>
     <BaseHead title={title} description={description} ogType={ogType} canonicalURL={canonicalURL} />
+    <slot name="head" />
   </head>
 
   <body>
     <div class="site-wrapper">
       <Sidebar activeNav={activeNav} />
 
-      <main class="content-area">
+      <main class="content-area" data-pagefind-body>
         <slot />
         <Footer />
       </main>

@@ -17,16 +17,47 @@ const { Content } = await render(article);
 
 // Convert "February 22, 2026" → "2026-02-22" for datetime attribute
 const dateISO = getISODate(article.data.date);
+
+// Use explicit description if available, otherwise fall back to title
+const metaDescription = article.data.description || article.data.title;
+
+// JSON-LD structured data for BlogPosting (schema.org)
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": article.data.title,
+  "description": metaDescription,
+  "datePublished": dateISO,
+  "author": {
+    "@type": "Person",
+    "name": config.author,
+    "url": "https://kchos0.dev",
+  },
+  "publisher": {
+    "@type": "Person",
+    "name": config.author,
+  },
+  "url": `https://kchos0.dev/writing/${article.id}/`,
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": `https://kchos0.dev/writing/${article.id}/`,
+  },
+};
 ---
 
 <BaseLayout
   title={`${article.data.title} — ${config.site_name}`}
-  description={article.data.title}
+  description={metaDescription}
   activeNav="writing"
+  ogType="article"
 >
+  <Fragment slot="head">
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </Fragment>
+
   <a href="/writing" class="back-link">&larr; back to writing</a>
 
-  <article>
+  <article data-pagefind-body>
     <header class="article-header">
       <h1 class="article-title">{article.data.title}</h1>
       <time class="article-date" datetime={dateISO}>{formatDate(article.data.date)}</time>
@@ -156,13 +187,11 @@ const dateISO = getISODate(article.data.date);
     line-height: 1.65;
   }
 
-  /* Shiki inlines both themes; hide/show based on data-theme */
-  :global(html:not([data-theme="dark"])) .article-body :global(pre .shiki.github-dark) {
-    display: none;
-  }
-
-  :global(html[data-theme="dark"]) .article-body :global(pre .shiki.github-light) {
-    display: none;
+  /* Shiki dual-theme via CSS variables — switch bg/color in dark mode */
+  :global(html[data-theme="dark"]) .article-body :global(.astro-code),
+  :global(html[data-theme="dark"]) .article-body :global(.astro-code span) {
+    color: var(--shiki-dark) !important;
+    background-color: var(--shiki-dark-bg) !important;
   }
 
   .article-body :global(pre code) {
@@ -218,5 +247,25 @@ const dateISO = getISODate(article.data.date);
     color: #2d8a4e;
     border-color: #2d8a4e;
     opacity: 1;
+  }
+
+  /* Images */
+  .article-body :global(img) {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-top: 1rem;
+  }
+
+  /* Captions: italicized text in a paragraph immediately after an image */
+  .article-body :global(img + p em),
+  .article-body :global(img + em) {
+    display: block;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0.5rem 0 2rem 0;
   }
 </style>

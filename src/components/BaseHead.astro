@@ -3,8 +3,8 @@ import config from '../../config.json';
 
 interface Props {
   title: string;
-  description?: string;
-  ogType?: 'website' | 'article';
+  description?: string | undefined;
+  ogType?: 'website' | 'article' | undefined;
   canonicalURL: URL;
 }
 
@@ -24,6 +24,9 @@ const {
 
 <!-- Favicon -->
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+<!-- RSS Feed -->
+<link rel="alternate" type="application/rss+xml" title={`${config.site_name} — writing`} href="/rss.xml" />
 
 <!-- Open Graph -->
 <meta property="og:type" content={ogType} />

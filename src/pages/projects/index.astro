@@ -1,6 +1,15 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import config from '../../../config.json';
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import { formatDate } from '../../utils/date';
+
+const allProjects = await getCollection('projects');
+
+const projects = allProjects.sort(
+  (a, b) => Date.parse(b.data.date) - Date.parse(a.data.date)
+);
 ---
 
 <BaseLayout title={`${config.site_name} — projects`} activeNav="projects">
@@ -13,9 +22,35 @@ import config from '../../../config.json';
 
   <section class="list-section">
     <ul class="clean-list">
-      <li class="empty-state">
-        no projects published yet. check back later.
-      </li>
+      {projects.length > 0 ? projects.map((project) => (
+        <li>
+          <a
+            href={project.data.link || '#'}
+            class="list-link"
+            target={project.data.link ? '_blank' : undefined}
+            rel={project.data.link ? 'noopener noreferrer' : undefined}
+          >
+            {project.data.image && (
+              <Image
+                src={project.data.image}
+                alt={project.data.title}
+                width={600}
+                height={315}
+                class="project-image"
+                loading="lazy"
+                decoding="async"
+              />
+            )}
+            <span class="list-meta date-meta">{formatDate(project.data.date)}</span>
+            <span class="list-title project-title">{project.data.title}</span>
+            <p class="project-description">{project.data.description}</p>
+          </a>
+        </li>
+      )) : (
+        <li class="empty-state">
+          no projects published yet. check back later.
+        </li>
+      )}
     </ul>
   </section>
 </BaseLayout>
@@ -49,6 +84,54 @@ import config from '../../../config.json';
   .clean-list {
     display: flex;
     flex-direction: column;
+  }
+
+  .list-link {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.5rem 0;
+    border-bottom: 1px dashed var(--border-color);
+    text-decoration: none;
+  }
+
+  .list-link:hover {
+    border-bottom-style: solid;
+    border-bottom-color: var(--text-main);
+  }
+
+  .project-image {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+  }
+
+  .date-meta {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .project-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+    transition: padding 0.2s ease;
+  }
+
+  .list-link:hover .project-title {
+    padding-left: 0.5rem;
+  }
+
+  .project-description {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
   }
 
   .empty-state {
