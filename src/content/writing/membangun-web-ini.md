@@ -1,11 +1,9 @@
 ---
 title: "Membangun Personal Web Minimalis"
 date: "March 2, 2026"
-description: "Cerita teknis tentang membangun website minimalis dengan Astro 5, TinaCMS, dan vanilla CSS — fokus pada performa, desain sederhana, dan kemudahan pengelolaan konten."
 featured: true
 ---
-
-Halo! Di post pertama ini, saya ingin berbagi cerita teknis tentang bagaimana saya membangun website ini dari nol. Website ini bukan sekadar portofolio, tapi juga eksperimen dalam menggunakan teknologi modern yang sangat *developer-friendly* tanpa mengorbankan performa.
+Halo! Di post pertama ini, saya ingin berbagi cerita tentang bagaimana saya membangun website ini dari nol. Website ini bukan sekadar portofolio, tapi juga eksperimen dalam menggunakan teknologi modern yang sangat *developer-friendly* tanpa mengorbankan performa.
 
 Fokus utamanya ada tiga: **performa tinggi**, **desain minimalis**, dan **kemudahan pengelolaan konten**.
 
@@ -14,7 +12,7 @@ Fokus utamanya ada tiga: **performa tinggi**, **desain minimalis**, dan **kemuda
 Website ini dibangun dengan stack yang sangat efisien:
 
 ### 1. Astro 5.0 (The Engine)
-Saya memilih Astro karena filosofinya yang "Zero JS by default". Versi 5.0 membawa fitur **Content Layer** yang sangat membantu dalam mengelola data dari berbagai sumber (Markdown, JSON, API) dengan tipe data yang aman (*type-safe*).
+Saya memilih Astro karena filosofinya yang "Zero JS by default". Versi 5.0 membawa fitur **Content Layer** yang sangat membantu dalam mengelola data dari berbagai sumber (Markdown, JSON, API) dengan *type-safe*.
 - **Islands Architecture**: Hanya bagian interaktif (seperti tombol copy kode atau toggle tema) yang menggunakan JavaScript.
 - **Fast Build**: Proses pembuatan situs statis yang sangat cepat.
 
@@ -34,10 +32,10 @@ Alih-alih menggunakan framework besar seperti Tailwind atau Bootstrap, saya memi
 
 Saya menginginkan website yang tidak hanya cepat bagi pengunjung, tetapi juga nyaman bagi saya sebagai penulis. Dengan stack ini, saya mendapatkan:
 - **Performa Sempurna**: Skor Lighthouse yang mencapai 100 di semua kategori.
-- **Developer Experience**: Menulis artikel semudah melakukan `git push` atau menggunakan dashboard visual TinaCMS.
+- **Developer Experience**: Menulis artikel semudah melakukan `git push` atau menggunakan dashboard TinaCMS.
 
 ![Skor Lighthouse 100/100/100/100](/assets/lighthouse-score.png)
-*Skor Lighthouse sempurna: bukti efisiensi dari Astro 5.*
+*Skor Lighthouse sempurna*
 
 ---
 
