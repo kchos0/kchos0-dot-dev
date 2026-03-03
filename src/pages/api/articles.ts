@@ -9,10 +9,10 @@ export async function POST({ request, redirect, locals }: {
   const env = getRuntimeEnv(locals);
 
   const formData = await request.formData();
-  const action = formData.get('_action') as string;
+  const action = formData.get('_action') as string | null;
 
-  const title = (formData.get('title') as string)?.trim();
-  const rawSlug = (formData.get('slug') as string)?.trim().toLowerCase();
+  const title = (formData.get('title') as string | null)?.trim();
+  const rawSlug = (formData.get('slug') as string | null)?.trim().toLowerCase() ?? '';
   const slug = rawSlug
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
@@ -20,9 +20,9 @@ export async function POST({ request, redirect, locals }: {
     .replace(/^-|-$/g, '')
     .slice(0, 100);
   const description = (formData.get('description') as string)?.trim() || null;
-  const dateRaw = formData.get('date') as string;
+  const dateRaw = formData.get('date') as string | null;
   const featured = formData.get('featured') === '1';
-  const content = (formData.get('content') as string)?.trim();
+  const content = (formData.get('content') as string | null)?.trim();
 
   if (!title || !slug || !dateRaw || !content) {
     return new Response('Missing required fields', { status: 400 });
