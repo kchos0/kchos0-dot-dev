@@ -10,12 +10,19 @@ export type Article = {
   content: string;
 };
 
-function getClient() {
-  // import.meta.env tersedia di Astro SSR dan Cloudflare Workers runtime
+/**
+ * Partial env shape — pass Astro.locals.runtime?.env from each page.
+ * Falls back to import.meta.env for local dev (astro dev / Node.js).
+ */
+export type DbEnv = { TURSO_DATABASE_URL?: string; TURSO_AUTH_TOKEN?: string };
+
+function getClient(env?: DbEnv) {
+  // On Cloudflare Pages, runtime secrets are in locals.runtime.env (passed as `env`).
+  // During local dev (astro dev), fall back to import.meta.env from .env file.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const env = (import.meta as any).env as Record<string, string | undefined>;
-  const url = env.TURSO_DATABASE_URL;
-  const authToken = env.TURSO_AUTH_TOKEN;
+  const resolved: Record<string, string | undefined> = (env ?? (import.meta as any).env) as Record<string, string | undefined>;
+  const url = resolved.TURSO_DATABASE_URL;
+  const authToken = resolved.TURSO_AUTH_TOKEN;
 
   if (!url) throw new Error('TURSO_DATABASE_URL is not set');
 
@@ -25,8 +32,8 @@ function getClient() {
 /**
  * Ambil semua artikel, diurutkan dari terbaru
  */
-export async function getAllArticles(): Promise<Article[]> {
-  const client = getClient();
+export async function getAllArticles(env?: DbEnv): Promise<Article[]> {
+  const client = getClient(env);
   const result = await client.execute(
     `SELECT id, slug, title, description, date, featured, content
      FROM articles
@@ -38,8 +45,8 @@ export async function getAllArticles(): Promise<Article[]> {
 /**
  * Ambil artikel berdasarkan slug
  */
-export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  const client = getClient();
+export async function getArticleBySlug(slug: string, env?: DbEnv): Promise<Article | null> {
+  const client = getClient(env);
   const result = await client.execute({
     sql: `SELECT id, slug, title, description, date, featured, content
           FROM articles
@@ -53,8 +60,8 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
 /**
  * Ambil artikel yang di-featured
  */
-export async function getFeaturedArticles(): Promise<Article[]> {
-  const client = getClient();
+export async function getFeaturedArticles(env?: DbEnv): Promise<Article[]> {
+  const client = getClient(env);
   const result = await client.execute(
     `SELECT id, slug, title, description, date, featured, content
      FROM articles
@@ -67,8 +74,8 @@ export async function getFeaturedArticles(): Promise<Article[]> {
 /**
  * Tambah artikel baru
  */
-export async function insertArticle(article: Omit<Article, 'id'>): Promise<void> {
-  const client = getClient();
+export async function insertArticle(article: Omit<Article, 'id'>, env?: DbEnv): Promise<void> {
+  const client = getClient(env);
   await client.execute({
     sql: `INSERT INTO articles (slug, title, description, date, featured, content)
           VALUES (?, ?, ?, ?, ?, ?)`,
@@ -86,8 +93,8 @@ export async function insertArticle(article: Omit<Article, 'id'>): Promise<void>
 /**
  * Update artikel yang sudah ada
  */
-export async function updateArticle(slug: string, article: Partial<Omit<Article, 'id' | 'slug'>>): Promise<void> {
-  const client = getClient();
+export async function updateArticle(slug: string, article: Partial<Omit<Article, 'id' | 'slug'>>, env?: DbEnv): Promise<void> {
+  const client = getClient(env);
   const fields: string[] = [];
   const args: unknown[] = [];
 
@@ -109,8 +116,8 @@ export async function updateArticle(slug: string, article: Partial<Omit<Article,
 /**
  * Hapus artikel berdasarkan slug
  */
-export async function deleteArticle(slug: string): Promise<void> {
-  const client = getClient();
+export async function deleteArticle(slug: string, env?: DbEnv): Promise<void> {
+  const client = getClient(env);
   await client.execute({
     sql: `DELETE FROM articles WHERE slug = ?`,
     args: [slug],

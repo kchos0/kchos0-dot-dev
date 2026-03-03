@@ -20,7 +20,8 @@ function bodyExcerpt(content = '', maxLen = 160) {
 }
 
 export async function GET(context) {
-  const articles = await getAllArticles();
+  const runtimeEnv = context.locals?.runtime?.env;
+  const articles = await getAllArticles(runtimeEnv);
 
   return rss({
     title: `${config.site_name} — writing`,

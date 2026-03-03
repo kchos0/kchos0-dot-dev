@@ -2,7 +2,10 @@
 import { getArticleBySlug } from '../../../lib/db';
 import config from '../../../../config.json';
 
-const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const runtimeEnv = (Astro.locals as any).runtime?.env;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ADMIN_PASSWORD = runtimeEnv?.ADMIN_PASSWORD ?? (import.meta as any).env.ADMIN_PASSWORD;
 const authCookie = Astro.cookies.get('admin_auth');
 const isAuthenticated = authCookie?.value === ADMIN_PASSWORD;
 
@@ -11,7 +14,7 @@ if (!isAuthenticated) {
 }
 
 const { slug } = Astro.params;
-const article = await getArticleBySlug(slug!);
+const article = await getArticleBySlug(slug!, runtimeEnv);
 
 if (!article) {
   return Astro.redirect('/admin');

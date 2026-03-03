@@ -6,7 +6,9 @@ import { formatDate, getISODate } from '../../utils/date';
 import { marked } from 'marked';
 
 const { slug } = Astro.params;
-const article = await getArticleBySlug(slug!);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const runtimeEnv = (Astro.locals as any).runtime?.env;
+const article = await getArticleBySlug(slug!, runtimeEnv);
 
 if (!article) {
   return Astro.redirect('/writing', 404);

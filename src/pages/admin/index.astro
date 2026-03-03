@@ -3,7 +3,10 @@ import { getAllArticles, deleteArticle } from '../../lib/db';
 import config from '../../../config.json';
 
 // Simple password protection via env var
-const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const runtimeEnv = (Astro.locals as any).runtime?.env;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ADMIN_PASSWORD = runtimeEnv?.ADMIN_PASSWORD ?? (import.meta as any).env.ADMIN_PASSWORD;
 
 // Check auth cookie
 const authCookie = Astro.cookies.get('admin_auth');
@@ -35,12 +38,12 @@ if (Astro.request.method === 'POST') {
 
   if (action === 'delete' && isAuthenticated) {
     const slug = formData.get('slug') as string;
-    if (slug) await deleteArticle(slug);
+    if (slug) await deleteArticle(slug, runtimeEnv);
     return Astro.redirect('/admin');
   }
 }
 
-const articles = isAuthenticated ? await getAllArticles() : [];
+const articles = isAuthenticated ? await getAllArticles(runtimeEnv) : [];
 ---
 
 <!DOCTYPE html>

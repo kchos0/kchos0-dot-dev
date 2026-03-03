@@ -1,13 +1,16 @@
 import { insertArticle, updateArticle } from '../../lib/db';
 
-export async function POST({ request, cookies, redirect }: {
+export async function POST({ request, cookies, redirect, locals }: {
   request: Request;
   cookies: { get: (name: string) => { value: string } | undefined };
   redirect: (url: string) => Response;
+  locals: unknown;
 }) {
   // Auth check
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ADMIN_PASSWORD = (import.meta as any).env.ADMIN_PASSWORD as string;
+  const runtimeEnv = (locals as any)?.runtime?.env;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ADMIN_PASSWORD = (runtimeEnv?.ADMIN_PASSWORD ?? (import.meta as any).env.ADMIN_PASSWORD) as string;
   const authCookie = cookies.get('admin_auth');
   if (!authCookie || authCookie.value !== ADMIN_PASSWORD) {
     return new Response('Unauthorized', { status: 401 });
@@ -38,12 +41,12 @@ export async function POST({ request, cookies, redirect }: {
     const originalSlug = (formData.get('original_slug') as string)?.trim();
     if (!originalSlug) return new Response('Missing original_slug', { status: 400 });
 
-    await updateArticle(originalSlug, { title, description, date, featured, content });
+    await updateArticle(originalSlug, { title, description, date, featured, content }, runtimeEnv);
     // If slug changed, handle it (delete old, insert new is complex — just update all fields)
     return redirect(`/writing/${slug}`);
   }
 
   // Default: insert new article
-  await insertArticle({ slug, title, description, date, featured, content });
+  await insertArticle({ slug, title, description, date, featured, content }, runtimeEnv);
   return redirect(`/writing/${slug}`);
 };
