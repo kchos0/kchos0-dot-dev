@@ -1,0 +1,9 @@
+{
+  "name": "kchos0-web",
+  "compatibility_date": "2026-03-03",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./dist/_worker.js/index.js",
+  "assets": {
+    "directory": "./dist"
+  }
+}
