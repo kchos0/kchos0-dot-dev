@@ -2,6 +2,7 @@
   "extends": "astro/tsconfigs/strictest",
   "compilerOptions": {
     "baseUrl": ".",
+    "module": "ESNext",
     "paths": {
       "@/*": [
         "src/*"

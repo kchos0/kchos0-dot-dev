@@ -1,18 +1,14 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getCollection } from "astro:content";
+import { getAllArticles } from "../../lib/db";
 import config from "../../../config.json";
 import { formatDate } from "../../utils/date";
 
-const allArticles = await getCollection("writing");
+const sorted = await getAllArticles();
 
-const sorted = allArticles.sort(
-  (a, b) => Date.parse(b.data.date) - Date.parse(a.data.date)
-);
-
-// Build excerpt from body: first non-empty, non-heading, non-HTML line, strip markdown
-function makeExcerpt(body: string): string {
-  const lines = body.split("\n");
+// Build excerpt from content: first non-empty, non-heading, non-HTML line, strip markdown
+function makeExcerpt(content: string): string {
+  const lines = content.split("\n");
   for (const line of lines) {
     const s = line.trim();
     if (
@@ -47,14 +43,14 @@ function makeExcerpt(body: string): string {
         sorted.length > 0 ? (
           sorted.map((article) => (
             <li>
-              <a href={`/writing/${article.id}`} class="list-link">
+              <a href={`/writing/${article.slug}`} class="list-link">
                 <span class="list-meta date-meta">
-                  {formatDate(article.data.date)}
+                  {formatDate(article.date)}
                 </span>
                 <span class="list-title article-title">
-                  {article.data.title}
+                  {article.title}
                 </span>
-                <p class="excerpt">{makeExcerpt(article.body ?? "")}</p>
+                <p class="excerpt">{makeExcerpt(article.content)}</p>
               </a>
             </li>
           ))

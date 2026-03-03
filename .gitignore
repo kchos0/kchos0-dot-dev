@@ -25,3 +25,5 @@ dist/
 # TinaCMS generated files
 tina/__generated__/
 public/admin/
+
+.env

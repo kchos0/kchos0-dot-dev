@@ -1,31 +1,30 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection, render } from 'astro:content';
+import { getArticleBySlug } from '../../lib/db';
 import config from '../../../config.json';
 import { formatDate, getISODate } from '../../utils/date';
+import { marked } from 'marked';
 
-export async function getStaticPaths() {
-  const articles = await getCollection('writing');
-  return articles.map((article) => ({
-    params: { slug: article.id },
-    props: { article },
-  }));
+const { slug } = Astro.params;
+const article = await getArticleBySlug(slug!);
+
+if (!article) {
+  return Astro.redirect('/writing', 404);
 }
 
-const { article } = Astro.props;
-const { Content } = await render(article);
+// Render Markdown → HTML
+const contentHtml = await marked.parse(article.content, {
+  gfm: true,
+  breaks: false,
+});
 
-// Convert "February 22, 2026" → "2026-02-22" for datetime attribute
-const dateISO = getISODate(article.data.date);
+const dateISO = getISODate(article.date);
+const metaDescription = article.description || article.title;
 
-// Use explicit description if available, otherwise fall back to title
-const metaDescription = article.data.description || article.data.title;
-
-// JSON-LD structured data for BlogPosting (schema.org)
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": article.data.title,
+  "headline": article.title,
   "description": metaDescription,
   "datePublished": dateISO,
   "author": {
@@ -37,16 +36,16 @@ const jsonLd = {
     "@type": "Person",
     "name": config.author,
   },
-  "url": `https://kchos0.dev/writing/${article.id}/`,
+  "url": `https://kchos0.dev/writing/${article.slug}/`,
   "mainEntityOfPage": {
     "@type": "WebPage",
-    "@id": `https://kchos0.dev/writing/${article.id}/`,
+    "@id": `https://kchos0.dev/writing/${article.slug}/`,
   },
 };
 ---
 
 <BaseLayout
-  title={`${article.data.title} — ${config.site_name}`}
+  title={`${article.title} — ${config.site_name}`}
   description={metaDescription}
   activeNav="writing"
   ogType="article"
@@ -59,13 +58,11 @@ const jsonLd = {
 
   <article data-pagefind-body>
     <header class="article-header">
-      <h1 class="article-title">{article.data.title}</h1>
-      <time class="article-date" datetime={dateISO}>{formatDate(article.data.date)}</time>
+      <h1 class="article-title">{article.title}</h1>
+      <time class="article-date" datetime={dateISO}>{formatDate(article.date)}</time>
     </header>
 
-    <div class="article-body">
-      <Content />
-    </div>
+    <div class="article-body" set:html={contentHtml} />
   </article>
 </BaseLayout>
 
@@ -175,7 +172,7 @@ const jsonLd = {
     background-color: #2a2a2a;
   }
 
-  /* Shiki code blocks — dual theme via CSS vars */
+  /* Code blocks */
   .article-body :global(pre) {
     position: relative;
     border-radius: 8px;
@@ -185,13 +182,12 @@ const jsonLd = {
     margin-bottom: 1.75rem;
     font-size: 0.88rem;
     line-height: 1.65;
+    background-color: #f6f8fa;
   }
 
-  /* Shiki dual-theme via CSS variables — switch bg/color in dark mode */
-  :global(html[data-theme="dark"]) .article-body :global(.astro-code),
-  :global(html[data-theme="dark"]) .article-body :global(.astro-code span) {
-    color: var(--shiki-dark) !important;
-    background-color: var(--shiki-dark-bg) !important;
+  :global(html[data-theme="dark"]) .article-body :global(pre) {
+    background-color: #161b22;
+    border-color: #30363d;
   }
 
   .article-body :global(pre code) {
@@ -202,10 +198,6 @@ const jsonLd = {
   }
 
   /* Copy button */
-  .article-body :global(pre) {
-    position: relative;
-  }
-
   .article-body :global(.code-copy-btn) {
     position: absolute;
     top: 0.5rem;
@@ -259,7 +251,7 @@ const jsonLd = {
     margin-top: 1rem;
   }
 
-  /* Captions: italicized text in a paragraph immediately after an image */
+  /* Captions */
   .article-body :global(img + p em),
   .article-body :global(img + em) {
     display: block;

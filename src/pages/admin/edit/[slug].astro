@@ -1,0 +1,103 @@
+---
+import { getArticleBySlug } from '../../../lib/db';
+import config from '../../../../config.json';
+
+const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD;
+const authCookie = Astro.cookies.get('admin_auth');
+const isAuthenticated = authCookie?.value === ADMIN_PASSWORD;
+
+if (!isAuthenticated) {
+  return Astro.redirect('/admin');
+}
+
+const { slug } = Astro.params;
+const article = await getArticleBySlug(slug!);
+
+if (!article) {
+  return Astro.redirect('/admin');
+}
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit: {article.title} — {config.site_name}</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #222; min-height: 100vh; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #ddd; }
+    h1 { font-size: 1.5rem; font-weight: 700; }
+    h2 { font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem; }
+    .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.85rem; font-weight: 500; color: #555; margin-bottom: 0.35rem; }
+    input[type="text"], input[type="date"], textarea { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 5px; font-size: 0.95rem; font-family: inherit; background: #fafafa; }
+    textarea { font-family: 'SF Mono', ui-monospace, Menlo, Consolas, monospace; font-size: 0.85rem; resize: vertical; }
+    input:focus, textarea:focus { outline: 2px solid #333; outline-offset: 1px; background: #fff; }
+    .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
+    .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; }
+    .checkbox-group label { margin: 0; font-weight: 400; color: #333; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    button { padding: 0.5rem 1.25rem; border-radius: 5px; border: 1px solid #333; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+    .btn-primary { background: #222; color: #fff; border-color: #222; }
+    .btn-primary:hover { background: #444; }
+    a.back { font-size: 0.85rem; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Edit Article</h1>
+      <a href="/admin" class="back">← Back to admin</a>
+    </header>
+
+    <div class="card">
+      <h2>{article.title}</h2>
+      <form method="POST" action="/api/articles">
+        <input type="hidden" name="_action" value="update" />
+        <input type="hidden" name="original_slug" value={article.slug} />
+
+        <div class="row">
+          <div class="form-group">
+            <label for="title">Title *</label>
+            <input type="text" id="title" name="title" required value={article.title} />
+          </div>
+          <div class="form-group">
+            <label for="slug">Slug *</label>
+            <input type="text" id="slug" name="slug" required value={article.slug} />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label for="date">Date *</label>
+            <input type="date" id="date" name="date" required value={article.date} />
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;">
+            <div class="checkbox-group">
+              <input type="checkbox" id="featured" name="featured" value="1" checked={article.featured} />
+              <label for="featured">Featured article</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description (SEO/RSS)</label>
+          <input type="text" id="description" name="description" value={article.description ?? ''} placeholder="Ringkasan singkat artikel (opsional)" />
+        </div>
+
+        <div class="form-group">
+          <label for="content">Content (Markdown) *</label>
+          <textarea id="content" name="content" rows="24" required>{article.content}</textarea>
+        </div>
+
+        <button type="submit" class="btn-primary">Save Changes</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

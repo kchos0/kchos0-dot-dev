@@ -1,10 +1,10 @@
 import rss from '@astrojs/rss';
-import { getCollection } from 'astro:content';
+import { getAllArticles } from '../lib/db';
 import config from '../../config.json';
 
-// Extracts a plain-text excerpt from raw markdown body
-function bodyExcerpt(body = '', maxLen = 160) {
-  const lines = body.split('\n');
+// Extracts a plain-text excerpt from raw markdown content
+function bodyExcerpt(content = '', maxLen = 160) {
+  const lines = content.split('\n');
   for (const line of lines) {
     const s = line.trim();
     if (!s || s.startsWith('#') || s.startsWith('<') || s.startsWith('!') || s.startsWith('---')) continue;
@@ -20,21 +20,17 @@ function bodyExcerpt(body = '', maxLen = 160) {
 }
 
 export async function GET(context) {
-  const writing = await getCollection('writing');
-
-  const sorted = writing.sort(
-    (a, b) => Date.parse(b.data.date) - Date.parse(a.data.date)
-  );
+  const articles = await getAllArticles();
 
   return rss({
     title: `${config.site_name} — writing`,
     description: config.description,
     site: context.site,
-    items: sorted.map((article) => ({
-      title: article.data.title,
-      pubDate: new Date(article.data.date),
-      description: article.data.description || bodyExcerpt(article.body),
-      link: `/writing/${article.id}/`,
+    items: articles.map((article) => ({
+      title: article.title,
+      pubDate: new Date(article.date),
+      description: article.description || bodyExcerpt(article.content),
+      link: `/writing/${article.slug}/`,
     })),
     customData: `<language>id</language>`,
   });

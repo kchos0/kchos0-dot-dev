@@ -1,9 +1,24 @@
----
-title: "Membangun Personal Web Minimalis"
-date: "March 2, 2026"
-featured: true
----
-Halo! Di post pertama ini, saya ingin berbagi cerita tentang bagaimana saya membangun website ini dari nol. Website ini bukan sekadar portofolio, tapi juga eksperimen dalam menggunakan teknologi modern yang sangat *developer-friendly* tanpa mengorbankan performa.
+-- Migration: buat tabel articles
+-- Jalankan via: turso db shell <db-name> < scripts/migrate.sql
+
+CREATE TABLE IF NOT EXISTS articles (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug      TEXT    UNIQUE NOT NULL,
+  title     TEXT    NOT NULL,
+  description TEXT,
+  date      TEXT    NOT NULL,
+  featured  INTEGER NOT NULL DEFAULT 0,  -- 0 = false, 1 = true
+  content   TEXT    NOT NULL
+);
+
+-- Seed: artikel pertama (dari src/content/writing/membangun-web-ini.md)
+INSERT OR IGNORE INTO articles (slug, title, description, date, featured, content) VALUES (
+  'membangun-web-ini',
+  'Membangun Personal Web Minimalis',
+  'Cerita tentang bagaimana saya membangun website ini dari nol menggunakan Astro, dengan fokus pada performa tinggi, desain minimalis, dan kemudahan pengelolaan konten.',
+  'March 2, 2026',
+  1,
+  'Halo! Di post pertama ini, saya ingin berbagi cerita tentang bagaimana saya membangun website ini dari nol. Website ini bukan sekadar portofolio, tapi juga eksperimen dalam menggunakan teknologi modern yang sangat *developer-friendly* tanpa mengorbankan performa.
 
 Fokus utamanya ada tiga: **performa tinggi**, **desain minimalis**, dan **kemudahan pengelolaan konten**.
 
@@ -16,10 +31,8 @@ Saya memilih Astro karena filosofinya yang "Zero JS by default". Versi 5.0 memba
 - **Islands Architecture**: Hanya bagian interaktif (seperti tombol copy kode atau toggle tema) yang menggunakan JavaScript.
 - **Fast Build**: Proses pembuatan situs statis yang sangat cepat.
 
-### 2. TinaCMS (The Content Editor)
-Untuk CMS, saya menggunakan TinaCMS dengan konfigurasi **local-first**.
-- **Real-time Editing**: Saya bisa melihat perubahan konten secara langsung di browser sebelum disimpan.
-- **Git-backed**: Semua perubahan yang dilakukan di CMS akan disimpan sebagai file Markdown di repositori Git, sehingga saya tetap memiliki kendali penuh atas data saya.
+### 2. Cloudflare Pages + Turso (The New Stack)
+Setelah migrasi, website ini kini berjalan di atas Cloudflare Workers dengan database Turso (SQLite edge). Artikel baru bisa ditambahkan langsung tanpa rebuild.
 
 ### 3. Vanilla CSS & Custom Properties
 Alih-alih menggunakan framework besar seperti Tailwind atau Bootstrap, saya memilih **CSS Murni**.
@@ -32,7 +45,7 @@ Alih-alih menggunakan framework besar seperti Tailwind atau Bootstrap, saya memi
 
 Saya menginginkan website yang tidak hanya cepat bagi pengunjung, tetapi juga nyaman bagi saya sebagai penulis. Dengan stack ini, saya mendapatkan:
 - **Performa Sempurna**: Skor Lighthouse yang mencapai 100 di semua kategori.
-- **Developer Experience**: Menulis artikel semudah melakukan `git push` atau menggunakan dashboard TinaCMS.
+- **Developer Experience**: Menulis artikel semudah mengisi form di halaman admin.
 
 ![Skor Lighthouse 100/100/100/100](/assets/lighthouse-score.png)
 *Skor Lighthouse sempurna*
@@ -49,21 +62,18 @@ Salah satu masalah umum pada website dengan mode gelap adalah "flash" warna puti
 ```javascript
 // Menghindari flash tema saat reload
 try {
-  const svdTheme = localStorage.getItem('theme');
-  if (svdTheme) document.documentElement.setAttribute('data-theme', svdTheme);
-  else if (window.matchMedia('(prefers-color-scheme: dark)').matches)
-    document.documentElement.setAttribute('data-theme', 'dark');
+  const svdTheme = localStorage.getItem(''theme'');
+  if (svdTheme) document.documentElement.setAttribute(''data-theme'', svdTheme);
+  else if (window.matchMedia(''(prefers-color-scheme: dark)'').matches)
+    document.documentElement.setAttribute(''data-theme'', ''dark'');
 } catch (_) {}
 ```
 
 ### Modular Components
-Awalnya, kode website ini cukup menumpuk di satu tempat. Lalu setelah konsiderasi, saya melakukan refaktor dengan memecah komponen menjadi lebih modular:
+Kode website ini dipecah menjadi komponen modular:
 - `BaseHead.astro`: Untuk meta-data SEO dan Open Graph.
 - `Sidebar.astro`: Navigasi vertikal yang responsif.
-- `utils/date.ts`: Modul khusus untuk menangani format tanggal secara konsisten (misal: "Feb '26" di halaman depan).
-
-### Syntax Highlighting dengan Shiki
-Untuk artikel teknis, tampilan kode sangat penting. Saya menggunakan **Shiki** yang terintegrasi langsung dengan Astro. Shiki merender kode sesuai tema VS Code favorit, sehingga pembaca bisa melihat kode dengan pewarnaan yang nyaman di mata.
+- `utils/date.ts`: Modul khusus untuk menangani format tanggal secara konsisten.
 
 ---
 
@@ -71,4 +81,5 @@ Untuk artikel teknis, tampilan kode sangat penting. Saya menggunakan **Shiki** y
 
 Ini barulah permulaan. Nantinya saya akan menambahkan fitur-fitur menarik lainnya.
 
-Bagi teman-teman yang ingin melihat kode sumbernya, silakan cek di [repositori GitHub saya](https://github.com/kchos0/kchos0-dot-dev). Terima kasih sudah mampir!
+Bagi teman-teman yang ingin melihat kode sumbernya, silakan cek di [repositori GitHub saya](https://github.com/kchos0/kchos0-dot-dev). Terima kasih sudah mampir!'
+);
