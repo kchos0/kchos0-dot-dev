@@ -1,0 +1,227 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getProjectBySlug, type Project } from '../../lib/db';
+import { getRuntimeEnv } from '../../lib/runtime';
+import config from '../../../config.json';
+import { formatDate, getISODate } from '../../utils/date';
+import { marked } from '../../lib/markdown';
+
+const { slug } = Astro.params;
+const env = getRuntimeEnv(Astro.locals);
+
+let project: Project | null = null;
+try {
+  project = await getProjectBySlug(slug!, env);
+} catch (err) {
+  console.error('Project fetch error:', err);
+  return new Response('Service temporarily unavailable', { status: 503 });
+}
+
+if (!project) {
+  return new Response(null, { status: 404 });
+}
+
+// Hidden projects are not publicly accessible
+if (project.hidden) {
+  return new Response(null, { status: 404 });
+}
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400');
+
+// Render Markdown → HTML (if content exists)
+const contentHtml = project.content
+  ? await marked.parse(project.content, { gfm: true, breaks: false })
+  : null;
+
+const dateISO = getISODate(project.date);
+const metaDescription = project.description || project.title;
+---
+
+<BaseLayout
+  title={`${project.title} — ${config.site_name}`}
+  description={metaDescription}
+  activeNav="projects"
+>
+  <a href="/projects" class="back-link">&larr; back to projects</a>
+
+  <article>
+    <header class="project-header">
+      <h1 class="project-title">{project.title}</h1>
+      <div class="project-meta">
+        <time datetime={dateISO}>{formatDate(project.date)}</time>
+        {
+          project.url && (
+            <a href={project.url} target="_blank" rel="noopener noreferrer" class="project-link">
+              {project.url.replace(/^https?:\/\//, '')} &rarr;
+            </a>
+          )
+        }
+      </div>
+      {project.description && <p class="project-description">{project.description}</p>}
+    </header>
+
+    {contentHtml && <div class="project-body" set:html={contentHtml} />}
+  </article>
+</BaseLayout>
+
+<script>
+  import { initCopyButtons } from '../../scripts/copy-button.js';
+  initCopyButtons('.project-body');
+</script>
+
+<style>
+  .back-link {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+    display: inline-block;
+  }
+
+  .project-header {
+    margin-top: 1.5rem;
+    margin-bottom: var(--space-lg);
+  }
+
+  .project-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
+  }
+
+  .project-meta {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    flex-wrap: wrap;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .project-link {
+    color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.9rem;
+  }
+
+  .project-link:hover {
+    color: var(--text-main);
+  }
+
+  .project-description {
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+
+  /* Project body typography — mirrors article body */
+  .project-body {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--text-main);
+    margin-top: var(--space-lg);
+  }
+
+  .project-body :global(p) {
+    margin-bottom: 1.5rem;
+  }
+
+  .project-body :global(h2) {
+    font-family: var(--font-sans);
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-top: 3rem;
+    margin-bottom: 0.85rem;
+    line-height: 1.2;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .project-body :global(h3) {
+    font-family: var(--font-sans);
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-top: 2.5rem;
+    margin-bottom: 0.6rem;
+    line-height: 1.3;
+  }
+
+  .project-body :global(ul),
+  .project-body :global(ol) {
+    list-style: disc;
+    padding-left: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .project-body :global(ol) {
+    list-style: decimal;
+  }
+
+  .project-body :global(li) {
+    margin-bottom: 0.45rem;
+  }
+
+  .project-body :global(hr) {
+    border: none;
+    border-top: 1px dashed var(--border-color);
+    margin: 2.5rem 0;
+  }
+
+  .project-body :global(blockquote) {
+    border-left: 3px solid var(--border-color);
+    padding: 0.25rem 0 0.25rem 1.25rem;
+    color: var(--text-muted);
+    margin: 0 0 1.5rem 0;
+    font-style: italic;
+  }
+
+  .project-body :global(code) {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
+    font-size: 0.85em;
+    background-color: var(--border-color);
+    padding: 0.15em 0.45em;
+    border-radius: 4px;
+  }
+
+  :global(html[data-theme='dark']) .project-body :global(code) {
+    background-color: #2a2a2a;
+  }
+
+  .project-body :global(pre) {
+    position: relative;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    padding: 1.1rem 1.25rem;
+    overflow-x: auto;
+    margin-bottom: 1.75rem;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    background-color: #f6f8fa;
+  }
+
+  :global(html[data-theme='dark']) .project-body :global(pre) {
+    background-color: #161b22;
+    border-color: #30363d;
+  }
+
+  .project-body :global(pre code) {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+  }
+
+  .project-body :global(img) {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-top: 1rem;
+  }
+</style>

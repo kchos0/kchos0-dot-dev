@@ -1,7 +1,7 @@
 // src/middleware.ts
 import { defineMiddleware } from 'astro:middleware';
 
-const PROTECTED_PREFIXES = ['/admin', '/api/articles'];
+const PROTECTED_PREFIXES = ['/admin', '/api/articles', '/api/projects'];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;

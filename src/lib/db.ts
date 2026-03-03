@@ -4,6 +4,10 @@ import { createClient, type InValue } from '@libsql/client';
 const LIST_COLS = 'id, slug, title, description, date, featured, hidden';
 const ALL_COLS = `${LIST_COLS}, content`;
 
+// Project-specific column lists
+const PROJECT_LIST_COLS = 'id, slug, title, description, url, date, featured, hidden';
+const PROJECT_ALL_COLS = `${PROJECT_LIST_COLS}, content`;
+
 export type Article = {
   id: number;
   slug: string;
@@ -218,6 +222,179 @@ export async function deleteArticle(
   const client = getClient(env);
   await client.execute({
     sql: `DELETE FROM articles WHERE slug = ?`,
+    args: [slug],
+  });
+}
+
+// ─── Projects ──────────────────────────────────────────────────────────────
+
+export type Project = {
+  id: number;
+  slug: string;
+  title: string;
+  description: string | null;
+  url: string | null;
+  date: string;
+  featured: boolean;
+  hidden: boolean;
+  content: string | null;
+};
+
+/** Project without the heavy `content` column — used by listing pages */
+export type ProjectSummary = Omit<Project, 'content'>;
+
+/** Convert a DB row to ProjectSummary (no content) */
+function rowToProjectSummary(row: Record<string, unknown>): ProjectSummary {
+  return {
+    id: Number(row.id),
+    slug: String(row.slug ?? ''),
+    title: String(row.title ?? ''),
+    description: row.description != null ? String(row.description) : null,
+    url: row.url != null ? String(row.url) : null,
+    date: String(row.date ?? ''),
+    featured: Boolean(row.featured),
+    hidden: Boolean(row.hidden),
+  };
+}
+
+/** Convert a DB row to Project (includes content) */
+function rowToProject(row: Record<string, unknown>): Project {
+  return {
+    ...rowToProjectSummary(row),
+    content: row.content != null ? String(row.content) : null,
+  };
+}
+
+/**
+ * Fetch all projects without content (for listing pages — excludes hidden)
+ */
+export async function getProjectSummaries(
+  env: Record<string, string | undefined>
+): Promise<ProjectSummary[]> {
+  const client = getClient(env);
+  const result = await client.execute(
+    `SELECT ${PROJECT_LIST_COLS} FROM projects WHERE hidden = 0 ORDER BY date DESC`
+  );
+  return result.rows.map((r) => rowToProjectSummary(r as Record<string, unknown>));
+}
+
+/**
+ * Fetch all projects without content for admin (includes hidden projects)
+ */
+export async function getAdminProjectSummaries(
+  env: Record<string, string | undefined>
+): Promise<ProjectSummary[]> {
+  const client = getClient(env);
+  const result = await client.execute(
+    `SELECT ${PROJECT_LIST_COLS} FROM projects ORDER BY date DESC`
+  );
+  return result.rows.map((r) => rowToProjectSummary(r as Record<string, unknown>));
+}
+
+/**
+ * Fetch a single project by slug
+ */
+export async function getProjectBySlug(
+  slug: string,
+  env: Record<string, string | undefined>
+): Promise<Project | null> {
+  const client = getClient(env);
+  const result = await client.execute({
+    sql: `SELECT ${PROJECT_ALL_COLS} FROM projects WHERE slug = ?`,
+    args: [slug],
+  });
+  if (result.rows.length === 0) return null;
+  return rowToProject(result.rows[0] as Record<string, unknown>);
+}
+
+/**
+ * Insert a new project
+ */
+export async function insertProject(
+  project: Omit<Project, 'id'>,
+  env: Record<string, string | undefined>
+): Promise<void> {
+  const client = getClient(env);
+  await client.execute({
+    sql: `INSERT INTO projects (slug, title, description, url, date, featured, hidden, content)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [
+      project.slug,
+      project.title,
+      project.description ?? null,
+      project.url ?? null,
+      project.date,
+      project.featured ? 1 : 0,
+      project.hidden ? 1 : 0,
+      project.content ?? null,
+    ],
+  });
+}
+
+/**
+ * Update an existing project (supports slug changes)
+ */
+export async function updateProject(
+  originalSlug: string,
+  project: Partial<Omit<Project, 'id'>>,
+  env: Record<string, string | undefined>
+): Promise<void> {
+  const client = getClient(env);
+  const fields: string[] = [];
+  const args: unknown[] = [];
+
+  if (project.slug !== undefined) {
+    fields.push('slug = ?');
+    args.push(project.slug);
+  }
+  if (project.title !== undefined) {
+    fields.push('title = ?');
+    args.push(project.title);
+  }
+  if (project.description !== undefined) {
+    fields.push('description = ?');
+    args.push(project.description);
+  }
+  if (project.url !== undefined) {
+    fields.push('url = ?');
+    args.push(project.url);
+  }
+  if (project.date !== undefined) {
+    fields.push('date = ?');
+    args.push(project.date);
+  }
+  if (project.featured !== undefined) {
+    fields.push('featured = ?');
+    args.push(project.featured ? 1 : 0);
+  }
+  if (project.hidden !== undefined) {
+    fields.push('hidden = ?');
+    args.push(project.hidden ? 1 : 0);
+  }
+  if (project.content !== undefined) {
+    fields.push('content = ?');
+    args.push(project.content ?? null);
+  }
+
+  if (fields.length === 0) return;
+  args.push(originalSlug);
+
+  await client.execute({
+    sql: `UPDATE projects SET ${fields.join(', ')} WHERE slug = ?`,
+    args: args as InValue[],
+  });
+}
+
+/**
+ * Delete a project by slug
+ */
+export async function deleteProject(
+  slug: string,
+  env: Record<string, string | undefined>
+): Promise<void> {
+  const client = getClient(env);
+  await client.execute({
+    sql: `DELETE FROM projects WHERE slug = ?`,
     args: [slug],
   });
 }

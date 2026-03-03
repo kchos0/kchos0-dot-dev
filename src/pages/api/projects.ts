@@ -1,4 +1,4 @@
-import { insertArticle, updateArticle, deleteArticle } from '../../lib/db';
+import { insertProject, updateProject, deleteProject } from '../../lib/db';
 import { getRuntimeEnv } from '../../lib/runtime';
 
 export async function POST({
@@ -19,8 +19,8 @@ export async function POST({
   if (action === 'delete') {
     const slug = formData.get('slug') as string | null;
     if (!slug) return new Response('Missing slug', { status: 400 });
-    await deleteArticle(slug, env);
-    return redirect('/admin#articles');
+    await deleteProject(slug, env);
+    return redirect('/admin#projects');
   }
 
   // Handle quick hide/unhide toggle
@@ -28,8 +28,8 @@ export async function POST({
     const slug = formData.get('slug') as string | null;
     const hidden = formData.get('hidden') === '1';
     if (!slug) return new Response('Missing slug', { status: 400 });
-    await updateArticle(slug, { hidden }, env);
-    return redirect('/admin#articles');
+    await updateProject(slug, { hidden }, env);
+    return redirect('/admin#projects');
   }
 
   const title = (formData.get('title') as string | null)?.trim();
@@ -41,12 +41,13 @@ export async function POST({
     .replace(/^-|-$/g, '')
     .slice(0, 100);
   const description = (formData.get('description') as string | null)?.trim() || null;
-  const date = formData.get('date') as string | null; // ISO format: YYYY-MM-DD
+  const url = (formData.get('url') as string | null)?.trim() || null;
+  const date = formData.get('date') as string | null;
   const featured = formData.get('featured') === '1';
   const hidden = formData.get('hidden') === '1';
-  const content = (formData.get('content') as string | null)?.trim();
+  const content = (formData.get('content') as string | null)?.trim() || null;
 
-  if (!title || !slug || !date || !content) {
+  if (!title || !slug || !date) {
     return new Response('Missing required fields', { status: 400 });
   }
 
@@ -54,11 +55,15 @@ export async function POST({
     const originalSlug = (formData.get('original_slug') as string | null)?.trim();
     if (!originalSlug) return new Response('Missing original_slug', { status: 400 });
 
-    await updateArticle(originalSlug, { slug, title, description, date, featured, hidden, content }, env);
-    return redirect(`/writing/${slug}`);
+    await updateProject(
+      originalSlug,
+      { slug, title, description, url, date, featured, hidden, content },
+      env
+    );
+    return redirect(`/projects/${slug}`);
   }
 
-  // Default: insert new article
-  await insertArticle({ slug, title, description, date, featured, hidden, content }, env);
-  return redirect(`/writing/${slug}`);
+  // Default: insert new project
+  await insertProject({ slug, title, description, url, date, featured, hidden, content }, env);
+  return redirect(`/projects/${slug}`);
 }

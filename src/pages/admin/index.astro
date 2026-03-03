@@ -1,5 +1,5 @@
 ---
-import { getAdminArticleSummaries, type ArticleSummary } from '../../lib/db';
+import { getAdminArticleSummaries, getAdminProjectSummaries, type ArticleSummary, type ProjectSummary } from '../../lib/db';
 import { getRuntimeEnv } from '../../lib/runtime';
 import { formatDate } from '../../utils/date';
 import config from '../../../config.json';
@@ -11,6 +11,13 @@ try {
   articles = await getAdminArticleSummaries(env);
 } catch (err) {
   console.error('Admin list DB error:', err);
+}
+
+let projects: ProjectSummary[] = [];
+try {
+  projects = await getAdminProjectSummaries(env);
+} catch (err) {
+  console.error('Admin projects DB error:', err);
 }
 ---
 
@@ -56,7 +63,7 @@ try {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
         padding-bottom: 1rem;
         border-bottom: 1px solid #ddd;
       }
@@ -71,6 +78,46 @@ try {
         margin-bottom: 1rem;
       }
 
+      /* ── Tabs ── */
+      .tabs {
+        display: flex;
+        gap: 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e0e0e0;
+      }
+
+      .tab-btn {
+        padding: 0.6rem 1.25rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        cursor: pointer;
+        color: #888;
+        border-radius: 0;
+        transition: color 0.15s, border-color 0.15s;
+      }
+
+      .tab-btn:hover {
+        color: #333;
+      }
+
+      .tab-btn.active {
+        color: #222;
+        border-bottom-color: #222;
+      }
+
+      .tab-panel {
+        display: none;
+      }
+
+      .tab-panel.active {
+        display: block;
+      }
+
+      /* ── Cards ── */
       .card {
         background: #fff;
         border: 1px solid #e0e0e0;
@@ -177,11 +224,11 @@ try {
         font-size: 0.8rem;
       }
 
-      .article-list {
+      .item-list {
         list-style: none;
       }
 
-      .article-item {
+      .item-row {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
@@ -190,27 +237,27 @@ try {
         gap: 1rem;
       }
 
-      .article-item:last-child {
+      .item-row:last-child {
         border-bottom: none;
       }
 
-      .article-info {
+      .item-info {
         flex: 1;
         min-width: 0;
       }
 
-      .article-title-link {
+      .item-title-link {
         font-weight: 500;
         font-size: 0.95rem;
         color: #222;
         text-decoration: none;
       }
 
-      .article-title-link:hover {
+      .item-title-link:hover {
         text-decoration: underline;
       }
 
-      .article-meta {
+      .item-meta {
         font-size: 0.8rem;
         color: #888;
         margin-top: 0.2rem;
@@ -232,7 +279,7 @@ try {
         color: #e65100;
       }
 
-      .article-actions {
+      .item-actions {
         display: flex;
         gap: 0.5rem;
         align-items: center;
@@ -258,7 +305,7 @@ try {
         font-size: 0.9rem;
       }
 
-      /* Dark mode overrides */
+      /* ── Dark mode ── */
       [data-theme='dark'] body {
         background: #111;
         color: #efefef;
@@ -269,6 +316,19 @@ try {
       }
       [data-theme='dark'] header {
         border-bottom-color: #333;
+      }
+      [data-theme='dark'] .tabs {
+        border-bottom-color: #333;
+      }
+      [data-theme='dark'] .tab-btn {
+        color: #666;
+      }
+      [data-theme='dark'] .tab-btn:hover {
+        color: #aaa;
+      }
+      [data-theme='dark'] .tab-btn.active {
+        color: #efefef;
+        border-bottom-color: #efefef;
       }
       [data-theme='dark'] label {
         color: #aaa;
@@ -300,10 +360,10 @@ try {
         background: #ccc;
         border-color: #ccc;
       }
-      [data-theme='dark'] .article-item {
+      [data-theme='dark'] .item-row {
         border-bottom-color: #333;
       }
-      [data-theme='dark'] .article-title-link {
+      [data-theme='dark'] .item-title-link {
         color: #efefef;
       }
       [data-theme='dark'] .badge {
@@ -333,144 +393,349 @@ try {
         </div>
       </header>
 
-      <!-- New Article Form -->
-      <div class="card">
-        <h2>New Article</h2>
-        <form method="POST" action="/api/articles">
-          <div class="row">
-            <div class="form-group">
-              <label for="title">Title *</label>
-              <input type="text" id="title" name="title" required placeholder="Judul artikel" />
-            </div>
-            <div class="form-group">
-              <label for="slug">Slug *</label>
-              <input type="text" id="slug" name="slug" required placeholder="judul-artikel" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="form-group">
-              <label for="date">Date *</label>
-              <input
-                type="date"
-                id="date"
-                name="date"
-                required
-                value={new Date().toISOString().slice(0, 10)}
-              />
-            </div>
-            <div class="form-group" style="display:flex;align-items:flex-end;gap:1.25rem;">
-              <div class="checkbox-group">
-                <input type="checkbox" id="featured" name="featured" value="1" />
-                <label for="featured">Featured article</label>
-              </div>
-              <div class="checkbox-group">
-                <input type="checkbox" id="hidden" name="hidden" value="1" />
-                <label for="hidden">Hidden (draft)</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="description">Description (SEO/RSS)</label>
-            <input
-              type="text"
-              id="description"
-              name="description"
-              placeholder="Ringkasan singkat artikel (opsional)"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="content">Content (Markdown) *</label>
-            <textarea
-              id="content"
-              name="content"
-              rows="18"
-              required
-              placeholder="Tulis artikel dalam format Markdown..."></textarea>
-          </div>
-
-          <button type="submit" class="btn-primary">Publish Article</button>
-        </form>
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="articles">
+          Articles ({articles.length})
+        </button>
+        <button class="tab-btn" data-tab="projects">
+          Projects ({projects.length})
+        </button>
       </div>
 
-      <!-- Articles List -->
-      <div class="card">
-        <h2>All Articles ({articles.length})</h2>
-        {
-          articles.length === 0 ? (
-            <p class="empty">Belum ada artikel.</p>
-          ) : (
-            <ul class="article-list">
-              {articles.map((article) => (
-                <li class="article-item">
-                  <div class="article-info">
-                    <a href={`/writing/${article.slug}`} target="_blank" class="article-title-link">
-                      {article.title}
-                      {article.featured && <span class="badge">featured</span>}
-                      {article.hidden && <span class="badge badge-hidden">hidden</span>}
-                    </a>
-                    <div class="article-meta">
-                      {formatDate(article.date)} &middot; /writing/{article.slug}
-                    </div>
-                  </div>
-                  <div class="article-actions">
-                    <a
-                      href={`/admin/edit/${article.slug}`}
-                      class="btn-sm"
-                      style="padding:0.3rem 0.75rem;border:1px solid #ccc;border-radius:5px;font-size:0.8rem;color:#333;text-decoration:none;"
-                    >
-                      Edit
-                    </a>
-                    <form method="POST" action="/api/articles">
-                      <input type="hidden" name="_action" value="set_hidden" />
-                      <input type="hidden" name="slug" value={article.slug} />
-                      <input type="hidden" name="hidden" value={article.hidden ? '0' : '1'} />
-                      <button
-                        type="submit"
-                        class="btn-sm"
-                        style={`padding:0.3rem 0.75rem;border-radius:5px;font-size:0.8rem;cursor:pointer;border:1px solid ${article.hidden ? '#2e7d32' : '#e65100'};color:${article.hidden ? '#2e7d32' : '#e65100'};background:none;`}
+      <!-- ── Articles Tab ── -->
+      <div id="tab-articles" class="tab-panel active">
+        <!-- New Article Form -->
+        <div class="card">
+          <h2>New Article</h2>
+          <form method="POST" action="/api/articles">
+            <div class="row">
+              <div class="form-group">
+                <label for="a-title">Title *</label>
+                <input type="text" id="a-title" name="title" required placeholder="Judul artikel" />
+              </div>
+              <div class="form-group">
+                <label for="a-slug">Slug *</label>
+                <input type="text" id="a-slug" name="slug" required placeholder="judul-artikel" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="form-group">
+                <label for="a-date">Date *</label>
+                <input
+                  type="date"
+                  id="a-date"
+                  name="date"
+                  required
+                  value={new Date().toISOString().slice(0, 10)}
+                />
+              </div>
+              <div class="form-group" style="display:flex;align-items:flex-end;gap:1.25rem;">
+                <div class="checkbox-group">
+                  <input type="checkbox" id="a-featured" name="featured" value="1" />
+                  <label for="a-featured">Featured article</label>
+                </div>
+                <div class="checkbox-group">
+                  <input type="checkbox" id="a-hidden" name="hidden" value="1" />
+                  <label for="a-hidden">Hidden (draft)</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="a-description">Description (SEO/RSS)</label>
+              <input
+                type="text"
+                id="a-description"
+                name="description"
+                placeholder="Ringkasan singkat artikel (opsional)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="a-content">Content (Markdown) *</label>
+              <textarea
+                id="a-content"
+                name="content"
+                rows="18"
+                required
+                placeholder="Tulis artikel dalam format Markdown..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary">Publish Article</button>
+          </form>
+        </div>
+
+        <!-- Articles List -->
+        <div class="card">
+          <h2>All Articles ({articles.length})</h2>
+          {
+            articles.length === 0 ? (
+              <p class="empty">Belum ada artikel.</p>
+            ) : (
+              <ul class="item-list">
+                {articles.map((article) => (
+                  <li class="item-row">
+                    <div class="item-info">
+                      <a
+                        href={`/writing/${article.slug}`}
+                        target="_blank"
+                        class="item-title-link"
                       >
-                        {article.hidden ? 'Unhide' : 'Hide'}
-                      </button>
-                    </form>
-                    <form
-                      method="POST"
-                      action="/api/articles"
-                      onsubmit="return confirm('Hapus artikel ini?')"
-                    >
-                      <input type="hidden" name="_action" value="delete" />
-                      <input type="hidden" name="slug" value={article.slug} />
-                      <button type="submit" class="btn-danger">
-                        Delete
-                      </button>
-                    </form>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )
-        }
+                        {article.title}
+                        {article.featured && <span class="badge">featured</span>}
+                        {article.hidden && <span class="badge badge-hidden">hidden</span>}
+                      </a>
+                      <div class="item-meta">
+                        {formatDate(article.date)} &middot; /writing/{article.slug}
+                      </div>
+                    </div>
+                    <div class="item-actions">
+                      <a
+                        href={`/admin/edit/${article.slug}`}
+                        class="btn-sm"
+                        style="padding:0.3rem 0.75rem;border:1px solid #ccc;border-radius:5px;font-size:0.8rem;color:#333;text-decoration:none;"
+                      >
+                        Edit
+                      </a>
+                      <form method="POST" action="/api/articles">
+                        <input type="hidden" name="_action" value="set_hidden" />
+                        <input type="hidden" name="slug" value={article.slug} />
+                        <input type="hidden" name="hidden" value={article.hidden ? '0' : '1'} />
+                        <button
+                          type="submit"
+                          class="btn-sm"
+                          style={`padding:0.3rem 0.75rem;border-radius:5px;font-size:0.8rem;cursor:pointer;border:1px solid ${article.hidden ? '#2e7d32' : '#e65100'};color:${article.hidden ? '#2e7d32' : '#e65100'};background:none;`}
+                        >
+                          {article.hidden ? 'Unhide' : 'Hide'}
+                        </button>
+                      </form>
+                      <form
+                        method="POST"
+                        action="/api/articles"
+                        onsubmit="return confirm('Hapus artikel ini?')"
+                      >
+                        <input type="hidden" name="_action" value="delete" />
+                        <input type="hidden" name="slug" value={article.slug} />
+                        <button type="submit" class="btn-danger">Delete</button>
+                      </form>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        </div>
+      </div>
+
+      <!-- ── Projects Tab ── -->
+      <div id="tab-projects" class="tab-panel">
+        <!-- New Project Form -->
+        <div class="card">
+          <h2>New Project</h2>
+          <form method="POST" action="/api/projects">
+            <div class="row">
+              <div class="form-group">
+                <label for="p-title">Title *</label>
+                <input type="text" id="p-title" name="title" required placeholder="Nama project" />
+              </div>
+              <div class="form-group">
+                <label for="p-slug">Slug *</label>
+                <input
+                  type="text"
+                  id="p-slug"
+                  name="slug"
+                  required
+                  placeholder="nama-project"
+                />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="form-group">
+                <label for="p-date">Date *</label>
+                <input
+                  type="date"
+                  id="p-date"
+                  name="date"
+                  required
+                  value={new Date().toISOString().slice(0, 10)}
+                />
+              </div>
+              <div class="form-group" style="display:flex;align-items:flex-end;gap:1.25rem;">
+                <div class="checkbox-group">
+                  <input type="checkbox" id="p-featured" name="featured" value="1" />
+                  <label for="p-featured">Featured</label>
+                </div>
+                <div class="checkbox-group">
+                  <input type="checkbox" id="p-hidden" name="hidden" value="1" />
+                  <label for="p-hidden">Hidden (draft)</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="p-url">Project URL</label>
+              <input
+                type="text"
+                id="p-url"
+                name="url"
+                placeholder="https://github.com/user/repo (opsional)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="p-description">Description</label>
+              <input
+                type="text"
+                id="p-description"
+                name="description"
+                placeholder="Ringkasan singkat project (opsional)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="p-content">Content (Markdown)</label>
+              <textarea
+                id="p-content"
+                name="content"
+                rows="12"
+                placeholder="Deskripsi panjang project dalam Markdown (opsional)..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary">Publish Project</button>
+          </form>
+        </div>
+
+        <!-- Projects List -->
+        <div class="card">
+          <h2>All Projects ({projects.length})</h2>
+          {
+            projects.length === 0 ? (
+              <p class="empty">Belum ada project.</p>
+            ) : (
+              <ul class="item-list">
+                {projects.map((project) => (
+                  <li class="item-row">
+                    <div class="item-info">
+                      <a
+                        href={`/projects/${project.slug}`}
+                        target="_blank"
+                        class="item-title-link"
+                      >
+                        {project.title}
+                        {project.featured && <span class="badge">featured</span>}
+                        {project.hidden && <span class="badge badge-hidden">hidden</span>}
+                      </a>
+                      <div class="item-meta">
+                        {formatDate(project.date)} &middot; /projects/{project.slug}
+                        {project.url && (
+                          <>
+                            {' '}
+                            &middot;{' '}
+                            <a
+                              href={project.url}
+                              target="_blank"
+                              style="color:inherit;"
+                            >
+                              {project.url.replace(/^https?:\/\//, '')}
+                            </a>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div class="item-actions">
+                      <a
+                        href={`/admin/projects/edit/${project.slug}`}
+                        class="btn-sm"
+                        style="padding:0.3rem 0.75rem;border:1px solid #ccc;border-radius:5px;font-size:0.8rem;color:#333;text-decoration:none;"
+                      >
+                        Edit
+                      </a>
+                      <form method="POST" action="/api/projects">
+                        <input type="hidden" name="_action" value="set_hidden" />
+                        <input type="hidden" name="slug" value={project.slug} />
+                        <input type="hidden" name="hidden" value={project.hidden ? '0' : '1'} />
+                        <button
+                          type="submit"
+                          class="btn-sm"
+                          style={`padding:0.3rem 0.75rem;border-radius:5px;font-size:0.8rem;cursor:pointer;border:1px solid ${project.hidden ? '#2e7d32' : '#e65100'};color:${project.hidden ? '#2e7d32' : '#e65100'};background:none;`}
+                        >
+                          {project.hidden ? 'Unhide' : 'Hide'}
+                        </button>
+                      </form>
+                      <form
+                        method="POST"
+                        action="/api/projects"
+                        onsubmit="return confirm('Hapus project ini?')"
+                      >
+                        <input type="hidden" name="_action" value="delete" />
+                        <input type="hidden" name="slug" value={project.slug} />
+                        <button type="submit" class="btn-danger">Delete</button>
+                      </form>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        </div>
       </div>
     </div>
 
     <script>
-      // Auto-generate slug dari title
-      const titleInput = document.getElementById('title');
-      const slugInput = document.getElementById('slug');
-      if (titleInput && slugInput) {
-        titleInput.addEventListener('input', () => {
-          if (!(slugInput as HTMLInputElement).dataset.edited) {
-            (slugInput as HTMLInputElement).value = (titleInput as HTMLInputElement).value
+      // ── Tab switching ──
+      const tabBtns = document.querySelectorAll<HTMLButtonElement>('.tab-btn');
+      const tabPanels = document.querySelectorAll<HTMLDivElement>('.tab-panel');
+
+      function activateTab(name: string) {
+        tabBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === name));
+        tabPanels.forEach((panel) => panel.classList.toggle('active', panel.id === `tab-${name}`));
+        history.replaceState(null, '', `#${name}`);
+      }
+
+      tabBtns.forEach((btn) => {
+        btn.addEventListener('click', () => activateTab(btn.dataset.tab!));
+      });
+
+      // Restore tab from URL hash on load
+      const hash = location.hash.replace('#', '');
+      if (hash === 'articles' || hash === 'projects') activateTab(hash);
+
+      // ── Auto-generate slug (articles) ──
+      const aTitleInput = document.getElementById('a-title');
+      const aSlugInput = document.getElementById('a-slug');
+      if (aTitleInput && aSlugInput) {
+        aTitleInput.addEventListener('input', () => {
+          if (!(aSlugInput as HTMLInputElement).dataset.edited) {
+            (aSlugInput as HTMLInputElement).value = (aTitleInput as HTMLInputElement).value
               .toLowerCase()
               .replace(/[^a-z0-9\s-]/g, '')
               .trim()
               .replace(/\s+/g, '-');
           }
         });
-        slugInput.addEventListener('input', () => {
-          (slugInput as HTMLElement).dataset.edited = '1';
+        aSlugInput.addEventListener('input', () => {
+          (aSlugInput as HTMLElement).dataset.edited = '1';
+        });
+      }
+
+      // ── Auto-generate slug (projects) ──
+      const pTitleInput = document.getElementById('p-title');
+      const pSlugInput = document.getElementById('p-slug');
+      if (pTitleInput && pSlugInput) {
+        pTitleInput.addEventListener('input', () => {
+          if (!(pSlugInput as HTMLInputElement).dataset.edited) {
+            (pSlugInput as HTMLInputElement).value = (pTitleInput as HTMLInputElement).value
+              .toLowerCase()
+              .replace(/[^a-z0-9\s-]/g, '')
+              .trim()
+              .replace(/\s+/g, '-');
+          }
+        });
+        pSlugInput.addEventListener('input', () => {
+          (pSlugInput as HTMLElement).dataset.edited = '1';
         });
       }
     </script>

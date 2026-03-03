@@ -1,4 +1,4 @@
--- Migration: buat tabel articles
+-- Migration: buat tabel articles & projects
 -- Jalankan via: turso db shell <db-name> < scripts/migrate.sql
 
 CREATE TABLE IF NOT EXISTS articles (
@@ -14,6 +14,19 @@ CREATE TABLE IF NOT EXISTS articles (
 
 -- Migration untuk database yang sudah ada: tambah kolom hidden jika belum ada
 ALTER TABLE articles ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0;
+
+-- Migration: buat tabel projects
+CREATE TABLE IF NOT EXISTS projects (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug        TEXT    UNIQUE NOT NULL,
+  title       TEXT    NOT NULL,
+  description TEXT,
+  url         TEXT,
+  date        TEXT    NOT NULL,
+  featured    INTEGER NOT NULL DEFAULT 0,  -- 0 = false, 1 = true
+  hidden      INTEGER NOT NULL DEFAULT 0,  -- 0 = visible, 1 = hidden from public
+  content     TEXT
+);
 
 -- Seed: artikel pertama (dari src/content/writing/membangun-web-ini.md)
 INSERT OR IGNORE INTO articles (slug, title, description, date, featured, content) VALUES (
