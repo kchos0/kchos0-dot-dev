@@ -176,25 +176,6 @@ if (!project) {
       }
 
       /* ── Preview panel ── */
-      .preview-label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: #aaa;
-        padding: 1.25rem 2.5rem 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-shrink: 0;
-      }
-      .preview-label::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: #e0e0e0;
-      }
-
       #preview-iframe {
         flex: 1;
         width: 100%;
@@ -267,12 +248,6 @@ if (!project) {
       }
       [data-theme='dark'] a.back {
         color: #888;
-      }
-      [data-theme='dark'] .preview-label {
-        color: #555;
-      }
-      [data-theme='dark'] .preview-label::after {
-        background: #222;
       }
     </style>
   </head>
@@ -369,7 +344,6 @@ if (!project) {
 
       <!-- ── Right: preview panel ── -->
       <div class="preview-panel">
-        <div class="preview-label">Preview</div>
         <iframe id="preview-iframe" title="Project preview" sandbox="allow-same-origin"></iframe>
       </div>
 
