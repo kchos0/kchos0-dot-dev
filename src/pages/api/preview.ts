@@ -1,6 +1,5 @@
 import { marked } from '../../lib/markdown';
 import { formatDate } from '../../utils/date';
-import config from '../../../config.json';
 
 // Inline all CSS so the iframe is fully self-contained
 const globalCss = `
@@ -38,92 +37,6 @@ body {
 ::selection { background-color: var(--text-main); color: var(--bg-color); }
 a { color: inherit; text-decoration: none; transition: color 0.2s ease, opacity 0.2s ease; }
 ul { list-style: none; }
-`;
-
-const layoutCss = `
-.site-wrapper {
-  max-width: 1000px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-}
-@media (min-width: 768px) {
-  .site-wrapper {
-    flex-direction: row;
-    padding: var(--space-xl) var(--space-lg);
-    gap: var(--space-xl);
-    align-items: flex-start;
-  }
-}
-.content-area {
-  flex-grow: 1;
-  max-width: 600px;
-  min-width: 0;
-  padding: var(--space-md) var(--space-sm);
-}
-@media (min-width: 768px) {
-  .content-area { padding: 0; }
-}
-`;
-
-const sidebarCss = `
-.sidebar {
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background-color: var(--bg-color);
-  border-bottom: 1px solid var(--border-color);
-  padding: 0.75rem var(--space-sm);
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-}
-@media (min-width: 768px) {
-  .sidebar {
-    display: block;
-    width: 200px;
-    position: sticky;
-    top: var(--space-xl);
-    border-bottom: none;
-    padding: 0;
-    background-color: transparent;
-  }
-}
-.brand { margin-bottom: 0; }
-@media (min-width: 768px) { .brand { margin-bottom: var(--space-md); } }
-.brand-name { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
-@media (min-width: 768px) { .brand-name { font-size: 1.5rem; margin-bottom: 0.2rem; } }
-.brand a { color: inherit; }
-.nav-vertical {
-  display: flex;
-  flex-direction: row;
-  gap: 1.25rem;
-  align-items: center;
-  margin-bottom: 0;
-  font-size: 0.9rem;
-}
-@media (min-width: 768px) {
-  .nav-vertical {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    margin-bottom: var(--space-md);
-    font-size: 0.95rem;
-  }
-}
-.nav-vertical a { color: var(--text-muted); }
-.nav-vertical a.active, .nav-vertical a:hover { color: var(--text-main); }
-@media (min-width: 768px) { .nav-vertical a.active::before { content: '→ '; } }
-#theme-toggle {
-  background: none; border: none; cursor: pointer;
-  color: var(--text-muted); text-align: left; padding: 0;
-  font-size: 1.1rem; display: flex; align-items: center;
-  opacity: 0.7; transition: opacity 0.2s;
-}
-#theme-toggle:hover { opacity: 1; }
-@media (min-width: 768px) { #theme-toggle { margin-top: 0.5rem; } }
 `;
 
 const articleCss = `
@@ -240,38 +153,21 @@ export async function POST({ request }: { request: Request }) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${title} — ${config.site_name}</title>
+  <title>${title}</title>
   <style>
     ${globalCss}
-    ${layoutCss}
-    ${sidebarCss}
     ${articleCss}
+    body { padding: 2rem 2.5rem; }
   </style>
 </head>
 <body>
-  <div class="site-wrapper">
-    <aside class="sidebar">
-      <div class="brand">
-        <p class="brand-name"><a href="/">${config.site_name}</a></p>
-      </div>
-      <nav class="nav-vertical">
-        <a href="/">index</a>
-        <a href="/writing" class="active">writing</a>
-        <a href="/projects">projects</a>
-      </nav>
-    </aside>
-
-    <main class="content-area">
-      <a href="/writing" class="back-link">&larr; back to writing</a>
-      <article>
-        <header class="article-header">
-          <h1 class="article-title">${title}</h1>
-          <time class="article-date">${displayDate}</time>
-        </header>
-        <div class="article-body">${contentHtml}</div>
-      </article>
-    </main>
-  </div>
+  <article>
+    <header class="article-header">
+      <h1 class="article-title">${title}</h1>
+      <time class="article-date">${displayDate}</time>
+    </header>
+    <div class="article-body">${contentHtml}</div>
+  </article>
 </body>
 </html>`;
 
