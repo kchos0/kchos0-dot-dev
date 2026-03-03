@@ -226,6 +226,47 @@ export async function deleteArticle(
   });
 }
 
+/**
+ * Duplicate an article — inserts a hidden copy with slug "{slug}-copy"
+ * (or "{slug}-copy-2", "-copy-3", etc. if already taken).
+ * Returns the new slug.
+ */
+export async function duplicateArticle(
+  slug: string,
+  env: Record<string, string | undefined>
+): Promise<string> {
+  const client = getClient(env);
+  const original = await getArticleBySlug(slug, env);
+  if (!original) throw new Error(`Article "${slug}" not found`);
+
+  // Find an available slug
+  let newSlug = `${slug}-copy`;
+  let suffix = 2;
+  while (true) {
+    const existing = await client.execute({
+      sql: `SELECT id FROM articles WHERE slug = ?`,
+      args: [newSlug],
+    });
+    if (existing.rows.length === 0) break;
+    newSlug = `${slug}-copy-${suffix++}`;
+  }
+
+  await client.execute({
+    sql: `INSERT INTO articles (slug, title, description, date, featured, hidden, content)
+          VALUES (?, ?, ?, ?, ?, 1, ?)`,
+    args: [
+      newSlug,
+      `${original.title} (Copy)`,
+      original.description ?? null,
+      original.date,
+      original.featured ? 1 : 0,
+      original.content,
+    ],
+  });
+
+  return newSlug;
+}
+
 // ─── Projects ──────────────────────────────────────────────────────────────
 
 export type Project = {
@@ -397,4 +438,46 @@ export async function deleteProject(
     sql: `DELETE FROM projects WHERE slug = ?`,
     args: [slug],
   });
+}
+
+/**
+ * Duplicate a project — inserts a hidden copy with slug "{slug}-copy"
+ * (or "{slug}-copy-2", "-copy-3", etc. if already taken).
+ * Returns the new slug.
+ */
+export async function duplicateProject(
+  slug: string,
+  env: Record<string, string | undefined>
+): Promise<string> {
+  const client = getClient(env);
+  const original = await getProjectBySlug(slug, env);
+  if (!original) throw new Error(`Project "${slug}" not found`);
+
+  // Find an available slug
+  let newSlug = `${slug}-copy`;
+  let suffix = 2;
+  while (true) {
+    const existing = await client.execute({
+      sql: `SELECT id FROM projects WHERE slug = ?`,
+      args: [newSlug],
+    });
+    if (existing.rows.length === 0) break;
+    newSlug = `${slug}-copy-${suffix++}`;
+  }
+
+  await client.execute({
+    sql: `INSERT INTO projects (slug, title, description, url, date, featured, hidden, content)
+          VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
+    args: [
+      newSlug,
+      `${original.title} (Copy)`,
+      original.description ?? null,
+      original.url ?? null,
+      original.date,
+      original.featured ? 1 : 0,
+      original.content ?? null,
+    ],
+  });
+
+  return newSlug;
 }

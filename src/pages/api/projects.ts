@@ -1,4 +1,4 @@
-import { insertProject, updateProject, deleteProject } from '../../lib/db';
+import { insertProject, updateProject, deleteProject, duplicateProject } from '../../lib/db';
 import { getRuntimeEnv } from '../../lib/runtime';
 
 export async function POST({
@@ -21,6 +21,14 @@ export async function POST({
     if (!slug) return new Response('Missing slug', { status: 400 });
     await deleteProject(slug, env);
     return redirect('/admin#projects');
+  }
+
+  // Handle duplicate action
+  if (action === 'duplicate') {
+    const slug = formData.get('slug') as string | null;
+    if (!slug) return new Response('Missing slug', { status: 400 });
+    const newSlug = await duplicateProject(slug, env);
+    return redirect(`/admin/projects/edit/${newSlug}`);
   }
 
   // Handle quick hide/unhide toggle

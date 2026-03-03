@@ -1,4 +1,4 @@
-import { insertArticle, updateArticle, deleteArticle } from '../../lib/db';
+import { insertArticle, updateArticle, deleteArticle, duplicateArticle } from '../../lib/db';
 import { getRuntimeEnv } from '../../lib/runtime';
 
 export async function POST({
@@ -21,6 +21,14 @@ export async function POST({
     if (!slug) return new Response('Missing slug', { status: 400 });
     await deleteArticle(slug, env);
     return redirect('/admin#articles');
+  }
+
+  // Handle duplicate action
+  if (action === 'duplicate') {
+    const slug = formData.get('slug') as string | null;
+    if (!slug) return new Response('Missing slug', { status: 400 });
+    const newSlug = await duplicateArticle(slug, env);
+    return redirect(`/admin/edit/${newSlug}`);
   }
 
   // Handle quick hide/unhide toggle
