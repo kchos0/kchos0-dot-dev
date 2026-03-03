@@ -18,14 +18,16 @@ export async function GET(context) {
     title: `${config.site_name} — writing`,
     description: config.description,
     site: context.site,
+    xmlns: {
+      atom: 'http://www.w3.org/2005/Atom',
+    },
     items: articles.map((article) => ({
       title: article.title,
       pubDate: new Date(getISODate(article.date)),
       description: article.description || makeExcerpt(article.content),
-      author: config.author,
       link: `/writing/${article.slug}/`,
     })),
-    customData: `<language>id</language>`,
+    customData: `<language>id</language><atom:link href="${context.site}rss.xml" rel="self" type="application/rss+xml"/>`,
   });
 
   feed.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
