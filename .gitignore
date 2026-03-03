@@ -1,29 +1,19 @@
-# Python
-__pycache__/
-*.pyc
-*.pyo
-
 # OS
 .DS_Store
 
 # Editor
 .vscode/
 .idea/
-*.suo
-*.sw?
 
-# Node (if any tooling is added)
+# Dependencies
 node_modules/
 
-# Python virtual environment
-venv/
-.venv/
-
+# Build output
 .astro/
 dist/
 
-# TinaCMS generated files
-tina/__generated__/
-public/admin/
+# Wrangler local dev state
+.wrangler/
 
+# Secrets
 .env
