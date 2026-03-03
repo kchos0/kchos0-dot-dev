@@ -54,7 +54,19 @@ export async function POST({
     const originalSlug = (formData.get('original_slug') as string | null)?.trim();
     if (!originalSlug) return new Response('Missing original_slug', { status: 400 });
 
-    await updateArticle(originalSlug, { slug, title, description, date, featured, hidden, content }, env);
+    await updateArticle(
+      originalSlug,
+      { slug, title, description, date, featured, hidden, content },
+      env
+    );
+
+    // Fetch requests (from the edit page JS) get a JSON ack instead of a redirect
+    if (request.headers.get('X-Fetch') === '1') {
+      return new Response(JSON.stringify({ ok: true, slug }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
     return redirect(`/writing/${slug}`);
   }
 

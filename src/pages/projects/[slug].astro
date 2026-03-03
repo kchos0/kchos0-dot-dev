@@ -216,6 +216,16 @@ const metaDescription = project.description || project.title;
     font-size: inherit;
   }
 
+  .project-body :global(strong),
+  .project-body :global(b) {
+    font-weight: 700;
+  }
+
+  .project-body :global(em),
+  .project-body :global(i) {
+    font-style: italic;
+  }
+
   .project-body :global(img) {
     max-width: 100%;
     height: auto;

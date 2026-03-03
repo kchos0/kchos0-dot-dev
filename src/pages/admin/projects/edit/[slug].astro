@@ -49,11 +49,35 @@ if (!project) {
         color: #222;
         min-height: 100vh;
       }
-      .container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 2rem 1.5rem;
+
+      /* ── Two-column layout ── */
+      .page-layout {
+        display: flex;
+        align-items: flex-start;
+        min-height: 100vh;
       }
+
+      /* Left: form panel */
+      .form-panel {
+        flex: 1;
+        min-width: 0;
+        padding: 2rem 1.5rem;
+        border-right: 1px solid #ddd;
+        min-height: 100vh;
+      }
+
+      /* Right: preview panel */
+      .preview-panel {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow: hidden;
+      }
+
       header {
         display: flex;
         justify-content: space-between;
@@ -151,10 +175,55 @@ if (!project) {
         color: #666;
       }
 
-      /* Dark mode overrides */
+      /* ── Preview panel ── */
+      .preview-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #aaa;
+        padding: 1.25rem 2.5rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+      }
+      .preview-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e0e0e0;
+      }
+
+      #preview-iframe {
+        flex: 1;
+        width: 100%;
+        border: none;
+        display: block;
+      }
+
+      .form-footer {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .save-status {
+        font-size: 0.85rem;
+        font-weight: 500;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .save-status.visible { opacity: 1; }
+      .save-status.ok  { color: #2d8a4e; }
+      .save-status.err { color: #c0392b; }
+
+      /* ── Dark mode ── */
       [data-theme='dark'] body {
         background: #111;
         color: #efefef;
+      }
+      [data-theme='dark'] .form-panel {
+        border-right-color: #222;
       }
       [data-theme='dark'] .card {
         background: #1a1a1a;
@@ -199,91 +268,196 @@ if (!project) {
       [data-theme='dark'] a.back {
         color: #888;
       }
+      [data-theme='dark'] .preview-label {
+        color: #555;
+      }
+      [data-theme='dark'] .preview-label::after {
+        background: #222;
+      }
     </style>
   </head>
   <body>
-    <div class="container">
-      <header>
-        <h1>Edit Project</h1>
-        <a href="/admin" class="back">← Back to admin</a>
-      </header>
+    <div class="page-layout">
 
-      <div class="card">
-        <h2>{project.title}</h2>
-        <form method="POST" action="/api/projects">
-          <input type="hidden" name="_action" value="update" />
-          <input type="hidden" name="original_slug" value={project.slug} />
+      <!-- ── Left: form panel ── -->
+      <div class="form-panel">
+        <header>
+          <h1>Edit Project</h1>
+          <a href="/admin" class="back">← Back to admin</a>
+        </header>
 
-          <div class="row">
-            <div class="form-group">
-              <label for="title">Title *</label>
-              <input type="text" id="title" name="title" required value={project.title} />
-            </div>
-            <div class="form-group">
-              <label for="slug">Slug *</label>
-              <input type="text" id="slug" name="slug" required value={project.slug} />
-            </div>
-          </div>
+        <div class="card">
+          <h2>{project.title}</h2>
+          <form method="POST" action="/api/projects">
+            <input type="hidden" name="_action" value="update" />
+            <input type="hidden" name="original_slug" value={project.slug} />
 
-          <div class="row">
-            <div class="form-group">
-              <label for="date">Date *</label>
-              <input type="date" id="date" name="date" required value={project.date} />
-            </div>
-            <div class="form-group" style="display:flex;align-items:flex-end;gap:1.25rem;">
-              <div class="checkbox-group">
-                <input
-                  type="checkbox"
-                  id="featured"
-                  name="featured"
-                  value="1"
-                  checked={project.featured}
-                />
-                <label for="featured">Featured</label>
+            <div class="row">
+              <div class="form-group">
+                <label for="title">Title *</label>
+                <input type="text" id="title" name="title" required value={project.title} />
               </div>
-              <div class="checkbox-group">
-                <input
-                  type="checkbox"
-                  id="hidden"
-                  name="hidden"
-                  value="1"
-                  checked={project.hidden}
-                />
-                <label for="hidden">Hidden (draft)</label>
+              <div class="form-group">
+                <label for="slug">Slug *</label>
+                <input type="text" id="slug" name="slug" required value={project.slug} />
               </div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="url">Project URL</label>
-            <input
-              type="text"
-              id="url"
-              name="url"
-              value={project.url ?? ''}
-              placeholder="https://github.com/user/repo (opsional)"
-            />
-          </div>
+            <div class="row">
+              <div class="form-group">
+                <label for="date">Date *</label>
+                <input type="date" id="date" name="date" required value={project.date} />
+              </div>
+              <div class="form-group" style="display:flex;align-items:flex-end;gap:1.25rem;">
+                <div class="checkbox-group">
+                  <input
+                    type="checkbox"
+                    id="featured"
+                    name="featured"
+                    value="1"
+                    checked={project.featured}
+                  />
+                  <label for="featured">Featured</label>
+                </div>
+                <div class="checkbox-group">
+                  <input
+                    type="checkbox"
+                    id="hidden"
+                    name="hidden"
+                    value="1"
+                    checked={project.hidden}
+                  />
+                  <label for="hidden">Hidden (draft)</label>
+                </div>
+              </div>
+            </div>
 
-          <div class="form-group">
-            <label for="description">Description</label>
-            <input
-              type="text"
-              id="description"
-              name="description"
-              value={project.description ?? ''}
-              placeholder="Ringkasan singkat project (opsional)"
-            />
-          </div>
+            <div class="form-group">
+              <label for="url">Project URL</label>
+              <input
+                type="text"
+                id="url"
+                name="url"
+                value={project.url ?? ''}
+                placeholder="https://github.com/user/repo (opsional)"
+              />
+            </div>
 
-          <div class="form-group">
-            <label for="content">Content (Markdown)</label>
-            <textarea id="content" name="content" rows="20">{project.content ?? ''}</textarea>
-          </div>
+            <div class="form-group">
+              <label for="description">Description</label>
+              <input
+                type="text"
+                id="description"
+                name="description"
+                value={project.description ?? ''}
+                placeholder="Ringkasan singkat project (opsional)"
+              />
+            </div>
 
-          <button type="submit" class="btn-primary">Save Changes</button>
-        </form>
+            <div class="form-group">
+              <label for="content">Content (Markdown)</label>
+              <textarea id="content" name="content" rows="24">{project.content ?? ''}</textarea>
+            </div>
+
+            <div class="form-footer">
+              <button type="submit" class="btn-primary" id="save-btn">Save Changes</button>
+              <span class="save-status" id="save-status"></span>
+            </div>
+          </form>
+        </div>
       </div>
+
+      <!-- ── Right: preview panel ── -->
+      <div class="preview-panel">
+        <div class="preview-label">Preview</div>
+        <iframe id="preview-iframe" title="Project preview" sandbox="allow-same-origin"></iframe>
+      </div>
+
     </div>
+
+    <script is:inline>
+      (async () => {
+        const textarea  = document.getElementById('content');
+        const titleEl   = document.getElementById('title');
+        const dateEl    = document.getElementById('date');
+        const iframe    = document.getElementById('preview-iframe');
+        if (!textarea || !iframe) return;
+
+        function getTheme() {
+          return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        }
+
+        async function updatePreview() {
+          const fd = new FormData();
+          fd.append('title',   titleEl ? titleEl.value : '');
+          fd.append('date',    dateEl  ? dateEl.value  : '');
+          fd.append('content', textarea.value);
+          fd.append('theme',   getTheme());
+
+          try {
+            const res = await fetch('/api/preview', { method: 'POST', body: fd });
+            if (res.ok) {
+              iframe.srcdoc = await res.text();
+            }
+          } catch (_) {}
+        }
+
+        let previewTimer;
+        function schedulePreview() {
+          clearTimeout(previewTimer);
+          previewTimer = setTimeout(updatePreview, 400);
+        }
+
+        textarea.addEventListener('input', schedulePreview);
+        if (titleEl) titleEl.addEventListener('input', schedulePreview);
+        if (dateEl)  dateEl.addEventListener('change', schedulePreview);
+
+        // Initial render
+        updatePreview();
+
+        // ── Async save ──
+        const form       = document.querySelector('form');
+        const saveBtn    = document.getElementById('save-btn');
+        const saveStatus = document.getElementById('save-status');
+
+        function showStatus(msg, type) {
+          saveStatus.textContent = msg;
+          saveStatus.className = 'save-status visible ' + type;
+        }
+        function hideStatus() {
+          saveStatus.className = 'save-status';
+        }
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          saveBtn.disabled = true;
+          hideStatus();
+
+          try {
+            const data = new FormData(form);
+            const res  = await fetch(form.action, {
+              method: 'POST',
+              body: data,
+              headers: { 'X-Fetch': '1' },
+            });
+
+            if (res.ok) {
+              const json = await res.json();
+              const origInput = form.querySelector('[name="original_slug"]');
+              if (origInput && json.slug) origInput.value = json.slug;
+              showStatus('Saved', 'ok');
+              setTimeout(hideStatus, 3000);
+            } else {
+              const txt = await res.text();
+              showStatus(txt || 'Error', 'err');
+            }
+          } catch (err) {
+            showStatus('Network error', 'err');
+          } finally {
+            saveBtn.disabled = false;
+          }
+        });
+      })();
+    </script>
   </body>
 </html>

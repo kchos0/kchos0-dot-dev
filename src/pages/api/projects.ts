@@ -60,6 +60,13 @@ export async function POST({
       { slug, title, description, url, date, featured, hidden, content },
       env
     );
+
+    if (request.headers.get('X-Fetch') === '1') {
+      return new Response(JSON.stringify({ ok: true, slug }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
     return redirect(`/projects/${slug}`);
   }
 
