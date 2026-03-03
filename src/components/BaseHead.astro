@@ -6,6 +6,7 @@ interface Props {
   description?: string | undefined;
   ogType?: 'website' | 'article' | undefined;
   canonicalURL: URL;
+  ogImage?: string | undefined;
 }
 
 const {
@@ -13,6 +14,7 @@ const {
   description = config.description,
   ogType = 'website',
   canonicalURL,
+  ogImage,
 } = Astro.props;
 ---
 
@@ -35,10 +37,20 @@ const {
 <meta property="og:url" content={canonicalURL} />
 <meta property="og:site_name" content={config.site_name} />
 
+<!-- Open Graph image -->
+{ogImage && (
+  <>
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+  </>
+)}
+
 <!-- Twitter/X Card -->
-<meta name="twitter:card" content="summary" />
+<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
+{ogImage && <meta name="twitter:image" content={ogImage} />}
 
 <!-- Prevent flash of wrong theme -->
 <script is:inline>

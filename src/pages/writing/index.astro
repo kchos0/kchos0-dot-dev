@@ -1,36 +1,19 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getAllArticles } from "../../lib/db";
+import { getArticleSummaries, type ArticleSummary } from "../../lib/db";
+import { getRuntimeEnv } from "../../lib/runtime";
 import config from "../../../config.json";
 import { formatDate } from "../../utils/date";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const runtimeEnv = (Astro.locals as any).runtime?.env;
-const sorted = await getAllArticles(runtimeEnv);
-
-// Build excerpt from content: first non-empty, non-heading, non-HTML line, strip markdown
-function makeExcerpt(content: string): string {
-  const lines = content.split("\n");
-  for (const line of lines) {
-    const s = line.trim();
-    if (
-      !s ||
-      s.startsWith("#") ||
-      s.startsWith("<") ||
-      s.startsWith("!") ||
-      s.startsWith("---")
-    )
-      continue;
-    let excerpt = s
-      .replace(/\*\*(.+?)\*\*/g, "$1")
-      .replace(/\*(.+?)\*/g, "$1")
-      .replace(/_(.+?)_/g, "$1")
-      .replace(/`(.+?)`/g, "$1");
-    if (excerpt.length > 160) excerpt = excerpt.slice(0, 157) + "...";
-    return excerpt;
-  }
-  return "";
+const env = getRuntimeEnv(Astro.locals);
+let sorted: ArticleSummary[] = [];
+try {
+  sorted = await getArticleSummaries(env);
+} catch (err) {
+  console.error('Writing list DB error:', err);
 }
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400');
 ---
 
 <BaseLayout title={`${config.site_name} — writing`} activeNav="writing">
@@ -52,7 +35,7 @@ function makeExcerpt(content: string): string {
                 <span class="list-title article-title">
                   {article.title}
                 </span>
-                <p class="excerpt">{makeExcerpt(article.content)}</p>
+                {article.description && <p class="excerpt">{article.description}</p>}
               </a>
             </li>
           ))

@@ -1,20 +1,28 @@
 ---
 import { getArticleBySlug } from '../../../lib/db';
+import { getRuntimeEnv } from '../../../lib/runtime';
+import { getAdminPassword, verifyAdminCookie } from '../../../lib/auth';
 import config from '../../../../config.json';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const runtimeEnv = (Astro.locals as any).runtime?.env;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ADMIN_PASSWORD = runtimeEnv?.ADMIN_PASSWORD ?? (import.meta as any).env.ADMIN_PASSWORD;
+const env = getRuntimeEnv(Astro.locals);
+const ADMIN_PASSWORD = getAdminPassword(env);
 const authCookie = Astro.cookies.get('admin_auth');
-const isAuthenticated = authCookie?.value === ADMIN_PASSWORD;
+const isAuthenticated = ADMIN_PASSWORD
+  ? await verifyAdminCookie(authCookie?.value, ADMIN_PASSWORD)
+  : false;
 
 if (!isAuthenticated) {
   return Astro.redirect('/admin');
 }
 
 const { slug } = Astro.params;
-const article = await getArticleBySlug(slug!, runtimeEnv);
+let article;
+try {
+  article = await getArticleBySlug(slug!, env);
+} catch (err) {
+  console.error('Edit article fetch error:', err);
+  return Astro.redirect('/admin');
+}
 
 if (!article) {
   return Astro.redirect('/admin');

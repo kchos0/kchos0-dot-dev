@@ -1,18 +1,27 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getArticleBySlug } from '../../lib/db';
+import { getRuntimeEnv } from '../../lib/runtime';
 import config from '../../../config.json';
 import { formatDate, getISODate } from '../../utils/date';
-import { marked } from 'marked';
+import { marked } from '../../lib/markdown';
 
 const { slug } = Astro.params;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const runtimeEnv = (Astro.locals as any).runtime?.env;
-const article = await getArticleBySlug(slug!, runtimeEnv);
+const env = getRuntimeEnv(Astro.locals);
+
+let article;
+try {
+  article = await getArticleBySlug(slug!, env);
+} catch (err) {
+  console.error('Article fetch error:', err);
+  return new Response('Service temporarily unavailable', { status: 503 });
+}
 
 if (!article) {
-  return Astro.redirect('/writing', 404);
+  return new Response(null, { status: 404 });
 }
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400');
 
 // Render Markdown → HTML
 const contentHtml = await marked.parse(article.content, {
@@ -23,6 +32,8 @@ const contentHtml = await marked.parse(article.content, {
 const dateISO = getISODate(article.date);
 const metaDescription = article.description || article.title;
 
+const siteBase = Astro.site?.toString().replace(/\/$/, '') ?? 'https://kchos0.dev';
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
@@ -32,16 +43,16 @@ const jsonLd = {
   "author": {
     "@type": "Person",
     "name": config.author,
-    "url": "https://kchos0.dev",
+    "url": siteBase,
   },
   "publisher": {
     "@type": "Person",
     "name": config.author,
   },
-  "url": `https://kchos0.dev/writing/${article.slug}/`,
+  "url": `${siteBase}/writing/${article.slug}/`,
   "mainEntityOfPage": {
     "@type": "WebPage",
-    "@id": `https://kchos0.dev/writing/${article.slug}/`,
+    "@id": `${siteBase}/writing/${article.slug}/`,
   },
 };
 ---

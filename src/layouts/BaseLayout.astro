@@ -9,6 +9,7 @@ interface Props {
   description?: string | undefined;
   activeNav?: 'index' | 'writing' | 'projects' | undefined;
   ogType?: 'website' | 'article' | undefined;
+  ogImage?: string | undefined;
 }
 
 const {
@@ -16,6 +17,7 @@ const {
   description,
   activeNav,
   ogType,
+  ogImage,
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
@@ -24,7 +26,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={title} description={description} ogType={ogType} canonicalURL={canonicalURL} />
+    <BaseHead title={title} description={description} ogType={ogType} canonicalURL={canonicalURL} ogImage={ogImage} />
     <slot name="head" />
   </head>
 

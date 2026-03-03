@@ -1,16 +1,17 @@
 ---
-import { getAllArticles, deleteArticle } from '../../lib/db';
+import { getArticleSummaries, deleteArticle, type ArticleSummary } from '../../lib/db';
+import { getRuntimeEnv } from '../../lib/runtime';
+import { getAdminPassword, verifyAdminCookie, createSessionToken } from '../../lib/auth';
 import config from '../../../config.json';
 
-// Simple password protection via env var
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const runtimeEnv = (Astro.locals as any).runtime?.env;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ADMIN_PASSWORD = runtimeEnv?.ADMIN_PASSWORD ?? (import.meta as any).env.ADMIN_PASSWORD;
+const env = getRuntimeEnv(Astro.locals);
+const ADMIN_PASSWORD = getAdminPassword(env);
 
 // Check auth cookie
 const authCookie = Astro.cookies.get('admin_auth');
-const isAuthenticated = authCookie?.value === ADMIN_PASSWORD;
+const isAuthenticated = ADMIN_PASSWORD
+  ? await verifyAdminCookie(authCookie?.value, ADMIN_PASSWORD)
+  : false;
 
 // Handle login POST
 if (Astro.request.method === 'POST') {
@@ -18,9 +19,10 @@ if (Astro.request.method === 'POST') {
   const action = formData.get('_action');
 
   if (action === 'login') {
-    const password = formData.get('password');
-    if (password === ADMIN_PASSWORD) {
-      Astro.cookies.set('admin_auth', ADMIN_PASSWORD as string, {
+    const password = formData.get('password') as string;
+    if (password && password === ADMIN_PASSWORD) {
+      const token = await createSessionToken(ADMIN_PASSWORD);
+      Astro.cookies.set('admin_auth', token, {
         httpOnly: true,
         secure: true,
         sameSite: 'strict',
@@ -38,12 +40,19 @@ if (Astro.request.method === 'POST') {
 
   if (action === 'delete' && isAuthenticated) {
     const slug = formData.get('slug') as string;
-    if (slug) await deleteArticle(slug, runtimeEnv);
+    if (slug) await deleteArticle(slug, env);
     return Astro.redirect('/admin');
   }
 }
 
-const articles = isAuthenticated ? await getAllArticles(runtimeEnv) : [];
+let articles: ArticleSummary[] = [];
+if (isAuthenticated) {
+  try {
+    articles = await getArticleSummaries(env);
+  } catch (err) {
+    console.error('Admin list DB error:', err);
+  }
+}
 ---
 
 <!DOCTYPE html>

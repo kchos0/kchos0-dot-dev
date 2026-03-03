@@ -1,13 +1,21 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getAllArticles, getFeaturedArticles } from "../lib/db";
+import { getHomepageData, type ArticleSummary } from "../lib/db";
+import { getRuntimeEnv } from "../lib/runtime";
 import config from "../../config.json";
 import { formatDate } from "../utils/date";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const runtimeEnv = (Astro.locals as any).runtime?.env;
-const latest = (await getAllArticles(runtimeEnv)).slice(0, 3);
-const featured = await getFeaturedArticles(runtimeEnv);
+const env = getRuntimeEnv(Astro.locals);
+let latest: ArticleSummary[] = [];
+let featured: ArticleSummary[] = [];
+
+try {
+  ({ latest, featured } = await getHomepageData(env));
+} catch (err) {
+  console.error('Home page DB error:', err);
+}
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400');
 ---
 
 <BaseLayout title={`${config.site_name} — index`} activeNav="index">

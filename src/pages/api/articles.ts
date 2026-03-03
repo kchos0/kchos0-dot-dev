@@ -1,4 +1,6 @@
 import { insertArticle, updateArticle } from '../../lib/db';
+import { getRuntimeEnv } from '../../lib/runtime';
+import { getAdminPassword, verifyAdminCookie } from '../../lib/auth';
 
 export async function POST({ request, cookies, redirect, locals }: {
   request: Request;
@@ -6,13 +8,11 @@ export async function POST({ request, cookies, redirect, locals }: {
   redirect: (url: string) => Response;
   locals: unknown;
 }) {
-  // Auth check
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const runtimeEnv = (locals as any)?.runtime?.env;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ADMIN_PASSWORD = (runtimeEnv?.ADMIN_PASSWORD ?? (import.meta as any).env.ADMIN_PASSWORD) as string;
+  const env = getRuntimeEnv(locals);
+  const ADMIN_PASSWORD = getAdminPassword(env);
   const authCookie = cookies.get('admin_auth');
-  if (!authCookie || authCookie.value !== ADMIN_PASSWORD) {
+
+  if (!ADMIN_PASSWORD || !(await verifyAdminCookie(authCookie?.value, ADMIN_PASSWORD))) {
     return new Response('Unauthorized', { status: 401 });
   }
 
@@ -20,7 +20,13 @@ export async function POST({ request, cookies, redirect, locals }: {
   const action = formData.get('_action') as string;
 
   const title = (formData.get('title') as string)?.trim();
-  const slug = (formData.get('slug') as string)?.trim().toLowerCase().replace(/\s+/g, '-');
+  const rawSlug = (formData.get('slug') as string)?.trim().toLowerCase();
+  const slug = rawSlug
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 100);
   const description = (formData.get('description') as string)?.trim() || null;
   const dateRaw = formData.get('date') as string;
   const featured = formData.get('featured') === '1';
@@ -41,12 +47,11 @@ export async function POST({ request, cookies, redirect, locals }: {
     const originalSlug = (formData.get('original_slug') as string)?.trim();
     if (!originalSlug) return new Response('Missing original_slug', { status: 400 });
 
-    await updateArticle(originalSlug, { title, description, date, featured, content }, runtimeEnv);
-    // If slug changed, handle it (delete old, insert new is complex — just update all fields)
+    await updateArticle(originalSlug, { slug, title, description, date, featured, content }, env);
     return redirect(`/writing/${slug}`);
   }
 
   // Default: insert new article
-  await insertArticle({ slug, title, description, date, featured, content }, runtimeEnv);
+  await insertArticle({ slug, title, description, date, featured, content }, env);
   return redirect(`/writing/${slug}`);
-};
+}

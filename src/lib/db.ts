@@ -1,5 +1,9 @@
 import { createClient, type InValue } from '@libsql/client';
 
+// Column lists for DRY SQL
+const LIST_COLS = 'id, slug, title, description, date, featured';
+const ALL_COLS = `${LIST_COLS}, content`;
+
 export type Article = {
   id: number;
   slug: string;
@@ -10,47 +14,109 @@ export type Article = {
   content: string;
 };
 
-/**
- * Partial env shape — pass Astro.locals.runtime?.env from each page.
- * Falls back to import.meta.env for local dev (astro dev / Node.js).
- */
-export type DbEnv = { TURSO_DATABASE_URL?: string; TURSO_AUTH_TOKEN?: string };
+/** Article without the heavy `content` column — used by listing pages */
+export type ArticleSummary = Omit<Article, 'content'>;
 
-function getClient(env?: DbEnv) {
-  // On Cloudflare Pages, runtime secrets are in locals.runtime.env (passed as `env`).
-  // During local dev (astro dev), fall back to import.meta.env from .env file.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const resolved: Record<string, string | undefined> = (env ?? (import.meta as any).env) as Record<string, string | undefined>;
-  const url = resolved.TURSO_DATABASE_URL;
-  const authToken = resolved.TURSO_AUTH_TOKEN;
+// Module-level client cache: reuse within the same Worker isolate
+const clientCache = new Map<string, ReturnType<typeof createClient>>();
+
+function getClient(env: Record<string, string | undefined>) {
+  const url = env.TURSO_DATABASE_URL;
+  const authToken = env.TURSO_AUTH_TOKEN;
 
   if (!url) throw new Error('TURSO_DATABASE_URL is not set');
 
-  return createClient({ url, ...(authToken ? { authToken } : {}) });
+  const cached = clientCache.get(url);
+  if (cached) return cached;
+
+  const client = createClient({ url, ...(authToken ? { authToken } : {}) });
+  clientCache.set(url, client);
+  return client;
+}
+
+/** Convert a DB row to ArticleSummary (no content) */
+function rowToSummary(row: Record<string, unknown>): ArticleSummary {
+  return {
+    id: Number(row.id),
+    slug: String(row.slug ?? ''),
+    title: String(row.title ?? ''),
+    description: row.description != null ? String(row.description) : null,
+    date: String(row.date ?? ''),
+    featured: Boolean(row.featured),
+  };
+}
+
+/** Convert a DB row to Article (includes content) */
+function rowToArticle(row: Record<string, unknown>): Article {
+  return {
+    ...rowToSummary(row),
+    content: String(row.content ?? ''),
+  };
 }
 
 /**
- * Ambil semua artikel, diurutkan dari terbaru
+ * Fetch latest + featured articles in a single round trip (home page)
  */
-export async function getAllArticles(env?: DbEnv): Promise<Article[]> {
+export async function getHomepageData(
+  env: Record<string, string | undefined>,
+  limit = 3
+): Promise<{ latest: ArticleSummary[]; featured: ArticleSummary[] }> {
+  const client = getClient(env);
+  const batchResults = await client.batch(
+    [
+      {
+        sql: `SELECT ${LIST_COLS} FROM articles ORDER BY date DESC LIMIT ?`,
+        args: [limit],
+      },
+      {
+        sql: `SELECT ${LIST_COLS} FROM articles WHERE featured = 1 ORDER BY date DESC`,
+        args: [],
+      },
+    ],
+    'read'
+  );
+  return {
+    latest: (batchResults[0]?.rows ?? []).map((r) => rowToSummary(r as Record<string, unknown>)),
+    featured: (batchResults[1]?.rows ?? []).map((r) => rowToSummary(r as Record<string, unknown>)),
+  };
+}
+
+/**
+ * Fetch all articles without content (for listing pages)
+ */
+export async function getArticleSummaries(
+  env: Record<string, string | undefined>
+): Promise<ArticleSummary[]> {
   const client = getClient(env);
   const result = await client.execute(
-    `SELECT id, slug, title, description, date, featured, content
-     FROM articles
-     ORDER BY date DESC`
+    `SELECT ${LIST_COLS} FROM articles ORDER BY date DESC`
+  );
+  return result.rows.map((r) => rowToSummary(r as Record<string, unknown>));
+}
+
+/**
+ * Fetch all articles with content (for RSS feed)
+ */
+export async function getAllArticles(
+  env: Record<string, string | undefined>
+): Promise<Article[]> {
+  const client = getClient(env);
+  const result = await client.execute(
+    `SELECT ${ALL_COLS} FROM articles ORDER BY date DESC`
   );
   return result.rows.map((r) => rowToArticle(r as Record<string, unknown>));
 }
 
 /**
- * Ambil artikel berdasarkan slug
+ * Fetch a single article by slug
  */
-export async function getArticleBySlug(slug: string, env?: DbEnv): Promise<Article | null> {
+export async function getArticleBySlug(
+  slug: string,
+  env: Record<string, string | undefined>
+): Promise<Article | null> {
   const client = getClient(env);
   const result = await client.execute({
-    sql: `SELECT id, slug, title, description, date, featured, content
-          FROM articles
-          WHERE slug = ?`,
+    sql: `SELECT ${ALL_COLS} FROM articles WHERE slug = ?`,
     args: [slug],
   });
   if (result.rows.length === 0) return null;
@@ -58,23 +124,12 @@ export async function getArticleBySlug(slug: string, env?: DbEnv): Promise<Artic
 }
 
 /**
- * Ambil artikel yang di-featured
+ * Insert a new article
  */
-export async function getFeaturedArticles(env?: DbEnv): Promise<Article[]> {
-  const client = getClient(env);
-  const result = await client.execute(
-    `SELECT id, slug, title, description, date, featured, content
-     FROM articles
-     WHERE featured = 1
-     ORDER BY date DESC`
-  );
-  return result.rows.map((r) => rowToArticle(r as Record<string, unknown>));
-}
-
-/**
- * Tambah artikel baru
- */
-export async function insertArticle(article: Omit<Article, 'id'>, env?: DbEnv): Promise<void> {
+export async function insertArticle(
+  article: Omit<Article, 'id'>,
+  env: Record<string, string | undefined>
+): Promise<void> {
   const client = getClient(env);
   await client.execute({
     sql: `INSERT INTO articles (slug, title, description, date, featured, content)
@@ -91,13 +146,18 @@ export async function insertArticle(article: Omit<Article, 'id'>, env?: DbEnv): 
 }
 
 /**
- * Update artikel yang sudah ada
+ * Update an existing article (supports slug changes)
  */
-export async function updateArticle(slug: string, article: Partial<Omit<Article, 'id' | 'slug'>>, env?: DbEnv): Promise<void> {
+export async function updateArticle(
+  originalSlug: string,
+  article: Partial<Omit<Article, 'id'>>,
+  env: Record<string, string | undefined>
+): Promise<void> {
   const client = getClient(env);
   const fields: string[] = [];
   const args: unknown[] = [];
 
+  if (article.slug !== undefined) { fields.push('slug = ?'); args.push(article.slug); }
   if (article.title !== undefined) { fields.push('title = ?'); args.push(article.title); }
   if (article.description !== undefined) { fields.push('description = ?'); args.push(article.description); }
   if (article.date !== undefined) { fields.push('date = ?'); args.push(article.date); }
@@ -105,7 +165,7 @@ export async function updateArticle(slug: string, article: Partial<Omit<Article,
   if (article.content !== undefined) { fields.push('content = ?'); args.push(article.content); }
 
   if (fields.length === 0) return;
-  args.push(slug);
+  args.push(originalSlug);
 
   await client.execute({
     sql: `UPDATE articles SET ${fields.join(', ')} WHERE slug = ?`,
@@ -114,25 +174,15 @@ export async function updateArticle(slug: string, article: Partial<Omit<Article,
 }
 
 /**
- * Hapus artikel berdasarkan slug
+ * Delete an article by slug
  */
-export async function deleteArticle(slug: string, env?: DbEnv): Promise<void> {
+export async function deleteArticle(
+  slug: string,
+  env: Record<string, string | undefined>
+): Promise<void> {
   const client = getClient(env);
   await client.execute({
     sql: `DELETE FROM articles WHERE slug = ?`,
     args: [slug],
   });
-}
-
-// Helper: konversi row dari libsql ke tipe Article
-function rowToArticle(row: Record<string, unknown>): Article {
-  return {
-    id: row.id as number,
-    slug: row.slug as string,
-    title: row.title as string,
-    description: row.description as string | null,
-    date: row.date as string,
-    featured: Boolean(row.featured),
-    content: row.content as string,
-  };
 }
