@@ -1,19 +1,9 @@
 ---
 import { getArticleBySlug } from '../../../lib/db';
 import { getRuntimeEnv } from '../../../lib/runtime';
-import { getAdminPassword, verifyAdminCookie } from '../../../lib/auth';
 import config from '../../../../config.json';
 
 const env = getRuntimeEnv(Astro.locals);
-const ADMIN_PASSWORD = getAdminPassword(env);
-const authCookie = Astro.cookies.get('admin_auth');
-const isAuthenticated = ADMIN_PASSWORD
-  ? await verifyAdminCookie(authCookie?.value, ADMIN_PASSWORD)
-  : false;
-
-if (!isAuthenticated) {
-  return Astro.redirect('/admin');
-}
 
 const { slug } = Astro.params;
 let article;

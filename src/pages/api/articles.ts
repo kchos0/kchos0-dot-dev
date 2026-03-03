@@ -1,20 +1,12 @@
 import { insertArticle, updateArticle } from '../../lib/db';
 import { getRuntimeEnv } from '../../lib/runtime';
-import { getAdminPassword, verifyAdminCookie } from '../../lib/auth';
 
-export async function POST({ request, cookies, redirect, locals }: {
+export async function POST({ request, redirect, locals }: {
   request: Request;
-  cookies: { get: (name: string) => { value: string } | undefined };
   redirect: (url: string) => Response;
   locals: unknown;
 }) {
   const env = getRuntimeEnv(locals);
-  const ADMIN_PASSWORD = getAdminPassword(env);
-  const authCookie = cookies.get('admin_auth');
-
-  if (!ADMIN_PASSWORD || !(await verifyAdminCookie(authCookie?.value, ADMIN_PASSWORD))) {
-    return new Response('Unauthorized', { status: 401 });
-  }
 
   const formData = await request.formData();
   const action = formData.get('_action') as string;

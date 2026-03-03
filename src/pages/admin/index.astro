@@ -1,44 +1,16 @@
 ---
 import { getArticleSummaries, deleteArticle, type ArticleSummary } from '../../lib/db';
 import { getRuntimeEnv } from '../../lib/runtime';
-import { getAdminPassword, verifyAdminCookie, createSessionToken } from '../../lib/auth';
 import config from '../../../config.json';
 
 const env = getRuntimeEnv(Astro.locals);
-const ADMIN_PASSWORD = getAdminPassword(env);
 
-// Check auth cookie
-const authCookie = Astro.cookies.get('admin_auth');
-const isAuthenticated = ADMIN_PASSWORD
-  ? await verifyAdminCookie(authCookie?.value, ADMIN_PASSWORD)
-  : false;
-
-// Handle login POST
+// Handle POST actions
 if (Astro.request.method === 'POST') {
   const formData = await Astro.request.formData();
   const action = formData.get('_action');
 
-  if (action === 'login') {
-    const password = formData.get('password') as string;
-    if (password && password === ADMIN_PASSWORD) {
-      const token = await createSessionToken(ADMIN_PASSWORD);
-      Astro.cookies.set('admin_auth', token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
-        maxAge: 60 * 60 * 24, // 1 day
-        path: '/',
-      });
-      return Astro.redirect('/admin');
-    }
-  }
-
-  if (action === 'logout') {
-    Astro.cookies.delete('admin_auth', { path: '/' });
-    return Astro.redirect('/admin');
-  }
-
-  if (action === 'delete' && isAuthenticated) {
+  if (action === 'delete') {
     const slug = formData.get('slug') as string;
     if (slug) await deleteArticle(slug, env);
     return Astro.redirect('/admin');
@@ -46,12 +18,10 @@ if (Astro.request.method === 'POST') {
 }
 
 let articles: ArticleSummary[] = [];
-if (isAuthenticated) {
-  try {
-    articles = await getArticleSummaries(env);
-  } catch (err) {
-    console.error('Admin list DB error:', err);
-  }
+try {
+  articles = await getArticleSummaries(env);
+} catch (err) {
+  console.error('Admin list DB error:', err);
 }
 ---
 
@@ -112,7 +82,6 @@ if (isAuthenticated) {
 
     input[type="text"],
     input[type="date"],
-    input[type="password"],
     textarea {
       width: 100%;
       padding: 0.5rem 0.75rem;
@@ -234,126 +203,105 @@ if (isAuthenticated) {
 
     .article-actions { display: flex; gap: 0.5rem; align-items: center; }
 
-    .login-wrap {
-      max-width: 360px;
-      margin: 5rem auto;
-    }
-
-    .login-wrap h1 { margin-bottom: 1.5rem; }
-
-    .logout-btn {
+    .logout-link {
       font-size: 0.85rem;
       padding: 0.35rem 0.75rem;
+      border: 1px solid #333;
+      border-radius: 5px;
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
     }
+
+    .logout-link:hover { background: #f0f0f0; }
 
     .empty { color: #888; font-style: italic; font-size: 0.9rem; }
   </style>
 </head>
 <body>
-  {!isAuthenticated ? (
-    <div class="container">
-      <div class="login-wrap">
-        <h1>Admin Login</h1>
-        <div class="card">
-          <form method="POST">
-            <input type="hidden" name="_action" value="login" />
-            <div class="form-group">
-              <label for="password">Password</label>
-              <input type="password" id="password" name="password" required autofocus />
-            </div>
-            <button type="submit" class="btn-primary">Login</button>
-          </form>
-        </div>
+  <div class="container">
+    <header>
+      <h1>Admin — {config.site_name}</h1>
+      <div style="display:flex;gap:0.75rem;align-items:center;">
+        <a href="/" style="font-size:0.85rem;color:#666;">← View site</a>
+        <a href="/cdn-cgi/access/logout" class="logout-link">Logout</a>
       </div>
-    </div>
-  ) : (
-    <div class="container">
-      <header>
-        <h1>Admin — {config.site_name}</h1>
-        <div style="display:flex;gap:0.75rem;align-items:center;">
-          <a href="/" style="font-size:0.85rem;color:#666;">← View site</a>
-          <form method="POST" style="display:inline;">
-            <input type="hidden" name="_action" value="logout" />
-            <button type="submit" class="logout-btn">Logout</button>
-          </form>
-        </div>
-      </header>
+    </header>
 
-      <!-- New Article Form -->
-      <div class="card">
-        <h2>New Article</h2>
-        <form method="POST" action="/api/articles">
-          <div class="row">
-            <div class="form-group">
-              <label for="title">Title *</label>
-              <input type="text" id="title" name="title" required placeholder="Judul artikel" />
-            </div>
-            <div class="form-group">
-              <label for="slug">Slug *</label>
-              <input type="text" id="slug" name="slug" required placeholder="judul-artikel" />
+    <!-- New Article Form -->
+    <div class="card">
+      <h2>New Article</h2>
+      <form method="POST" action="/api/articles">
+        <div class="row">
+          <div class="form-group">
+            <label for="title">Title *</label>
+            <input type="text" id="title" name="title" required placeholder="Judul artikel" />
+          </div>
+          <div class="form-group">
+            <label for="slug">Slug *</label>
+            <input type="text" id="slug" name="slug" required placeholder="judul-artikel" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label for="date">Date *</label>
+            <input type="date" id="date" name="date" required value={new Date().toISOString().slice(0,10)} />
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;">
+            <div class="checkbox-group">
+              <input type="checkbox" id="featured" name="featured" value="1" />
+              <label for="featured">Featured article</label>
             </div>
           </div>
+        </div>
 
-          <div class="row">
-            <div class="form-group">
-              <label for="date">Date *</label>
-              <input type="date" id="date" name="date" required value={new Date().toISOString().slice(0,10)} />
-            </div>
-            <div class="form-group" style="display:flex;align-items:flex-end;">
-              <div class="checkbox-group">
-                <input type="checkbox" id="featured" name="featured" value="1" />
-                <label for="featured">Featured article</label>
+        <div class="form-group">
+          <label for="description">Description (SEO/RSS)</label>
+          <input type="text" id="description" name="description" placeholder="Ringkasan singkat artikel (opsional)" />
+        </div>
+
+        <div class="form-group">
+          <label for="content">Content (Markdown) *</label>
+          <textarea id="content" name="content" rows="18" required placeholder="Tulis artikel dalam format Markdown..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-primary">Publish Article</button>
+      </form>
+    </div>
+
+    <!-- Articles List -->
+    <div class="card">
+      <h2>All Articles ({articles.length})</h2>
+      {articles.length === 0 ? (
+        <p class="empty">Belum ada artikel.</p>
+      ) : (
+        <ul class="article-list">
+          {articles.map((article) => (
+            <li class="article-item">
+              <div class="article-info">
+                <a href={`/writing/${article.slug}`} target="_blank" class="article-title-link">
+                  {article.title}
+                  {article.featured && <span class="badge">featured</span>}
+                </a>
+                <div class="article-meta">
+                  {article.date} &middot; /writing/{article.slug}
+                </div>
               </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="description">Description (SEO/RSS)</label>
-            <input type="text" id="description" name="description" placeholder="Ringkasan singkat artikel (opsional)" />
-          </div>
-
-          <div class="form-group">
-            <label for="content">Content (Markdown) *</label>
-            <textarea id="content" name="content" rows="18" required placeholder="Tulis artikel dalam format Markdown..."></textarea>
-          </div>
-
-          <button type="submit" class="btn-primary">Publish Article</button>
-        </form>
-      </div>
-
-      <!-- Articles List -->
-      <div class="card">
-        <h2>All Articles ({articles.length})</h2>
-        {articles.length === 0 ? (
-          <p class="empty">Belum ada artikel.</p>
-        ) : (
-          <ul class="article-list">
-            {articles.map((article) => (
-              <li class="article-item">
-                <div class="article-info">
-                  <a href={`/writing/${article.slug}`} target="_blank" class="article-title-link">
-                    {article.title}
-                    {article.featured && <span class="badge">featured</span>}
-                  </a>
-                  <div class="article-meta">
-                    {article.date} &middot; /writing/{article.slug}
-                  </div>
-                </div>
-                <div class="article-actions">
-                  <a href={`/admin/edit/${article.slug}`} class="btn-sm" style="padding:0.3rem 0.75rem;border:1px solid #ccc;border-radius:5px;font-size:0.8rem;color:#333;text-decoration:none;">Edit</a>
-                  <form method="POST" onsubmit="return confirm('Hapus artikel ini?')">
-                    <input type="hidden" name="_action" value="delete" />
-                    <input type="hidden" name="slug" value={article.slug} />
-                    <button type="submit" class="btn-danger">Delete</button>
-                  </form>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+              <div class="article-actions">
+                <a href={`/admin/edit/${article.slug}`} class="btn-sm" style="padding:0.3rem 0.75rem;border:1px solid #ccc;border-radius:5px;font-size:0.8rem;color:#333;text-decoration:none;">Edit</a>
+                <form method="POST" onsubmit="return confirm('Hapus artikel ini?')">
+                  <input type="hidden" name="_action" value="delete" />
+                  <input type="hidden" name="slug" value={article.slug} />
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
-  )}
+  </div>
 
   <script>
     // Auto-generate slug dari title
