@@ -8,7 +8,14 @@ export default defineConfig({
     platformProxy: {
       enabled: true,
     },
+    imageService: 'compile',
   }),
+  session: {
+    driver: 'cloudflare-kv-binding',
+    options: {
+      binding: 'SESSION',
+    },
+  },
   build: {
     inlineStylesheets: 'always',
   },
