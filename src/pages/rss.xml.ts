@@ -1,13 +1,13 @@
+import type { APIContext } from 'astro';
 import rss from '@astrojs/rss';
-import { getAllArticles } from '../lib/db';
+import { getAllArticles, type Article } from '../lib/db';
 import { getRuntimeEnv } from '../lib/runtime';
 import { makeExcerpt } from '../utils/excerpt';
-import { getISODate } from '../utils/date';
 import config from '../../config.json';
 
-export async function GET(context) {
+export async function GET(context: APIContext): Promise<Response> {
   const env = getRuntimeEnv(context.locals);
-  let articles = [];
+  let articles: Article[] = [];
   try {
     articles = await getAllArticles(env);
   } catch (err) {
@@ -17,13 +17,13 @@ export async function GET(context) {
   const feed = await rss({
     title: `${config.site_name} — writing`,
     description: config.description,
-    site: context.site,
+    site: context.site!,
     xmlns: {
       atom: 'http://www.w3.org/2005/Atom',
     },
     items: articles.map((article) => ({
       title: article.title,
-      pubDate: new Date(getISODate(article.date)),
+      pubDate: new Date(article.date + 'T00:00:00Z'),
       description: article.description || makeExcerpt(article.content),
       link: `/writing/${article.slug}/`,
     })),

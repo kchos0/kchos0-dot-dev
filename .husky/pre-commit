@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  printf '%s\n' 'gitleaks is required for commit scanning. Install it: https://github.com/gitleaks/gitleaks'
+  exit 1
+fi
+
+npm run secrets:scan

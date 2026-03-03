@@ -6,8 +6,8 @@ const PROTECTED_PREFIXES = ['/admin', '/api/articles'];
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
 
-  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-    pathname === prefix || pathname.startsWith(prefix + '/')
+  const isProtected = PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
   );
 
   if (!isProtected) return next();

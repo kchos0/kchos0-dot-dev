@@ -1,23 +1,19 @@
 ---
 export const prerender = true;
 
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import config from "../../../config.json";
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import config from '../../../config.json';
 ---
 
 <BaseLayout title={`${config.site_name} — projects`} activeNav="projects">
   <section class="intro-section">
     <h1 class="hero-title">projects.</h1>
-    <p class="intro-subtitle">
-      experiments, tools, and side quests I made in my free time.
-    </p>
+    <p class="intro-subtitle">experiments, tools, and side quests I made in my free time.</p>
   </section>
 
   <section class="list-section">
     <ul class="clean-list">
-      <li class="empty-state">
-        no projects published yet. check back later.
-      </li>
+      <li class="empty-state">no projects published yet. check back later.</li>
     </ul>
   </section>
 </BaseLayout>

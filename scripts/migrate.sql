@@ -8,15 +8,19 @@ CREATE TABLE IF NOT EXISTS articles (
   description TEXT,
   date      TEXT    NOT NULL,
   featured  INTEGER NOT NULL DEFAULT 0,  -- 0 = false, 1 = true
+  hidden    INTEGER NOT NULL DEFAULT 0,  -- 0 = visible, 1 = hidden from public
   content   TEXT    NOT NULL
 );
+
+-- Migration untuk database yang sudah ada: tambah kolom hidden jika belum ada
+ALTER TABLE articles ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0;
 
 -- Seed: artikel pertama (dari src/content/writing/membangun-web-ini.md)
 INSERT OR IGNORE INTO articles (slug, title, description, date, featured, content) VALUES (
   'membangun-web-ini',
   'Membangun Personal Web Minimalis',
   'Cerita tentang bagaimana saya membangun website ini dari nol menggunakan Astro, dengan fokus pada performa tinggi, desain minimalis, dan kemudahan pengelolaan konten.',
-  'March 2, 2026',
+  '2026-03-02',
   1,
   'Halo! Di post pertama ini, saya ingin berbagi cerita tentang bagaimana saya membangun website ini dari nol. Website ini bukan sekadar portofolio, tapi juga eksperimen dalam menggunakan teknologi modern yang sangat *developer-friendly* tanpa mengorbankan performa.
 

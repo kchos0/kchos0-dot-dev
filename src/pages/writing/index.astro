@@ -1,9 +1,9 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getArticleSummaries, type ArticleSummary } from "../../lib/db";
-import { getRuntimeEnv } from "../../lib/runtime";
-import config from "../../../config.json";
-import { formatDate } from "../../utils/date";
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getArticleSummaries, type ArticleSummary } from '../../lib/db';
+import { getRuntimeEnv } from '../../lib/runtime';
+import config from '../../../config.json';
+import { formatDate } from '../../utils/date';
 
 const env = getRuntimeEnv(Astro.locals);
 let sorted: ArticleSummary[] = [];
@@ -29,12 +29,8 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
           sorted.map((article) => (
             <li>
               <a href={`/writing/${article.slug}`} class="list-link">
-                <span class="list-meta date-meta">
-                  {formatDate(article.date)}
-                </span>
-                <span class="list-title article-title">
-                  {article.title}
-                </span>
+                <span class="list-meta date-meta">{formatDate(article.date)}</span>
+                <span class="list-title article-title">{article.title}</span>
                 {article.description && <p class="excerpt">{article.description}</p>}
               </a>
             </li>

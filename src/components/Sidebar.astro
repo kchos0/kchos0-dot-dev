@@ -16,10 +16,7 @@ const { activeNav } = Astro.props;
     <a href="/" class={activeNav === 'index' ? 'active' : ''}>index</a>
     <a href="/writing" class={activeNav === 'writing' ? 'active' : ''}>writing</a>
     <a href="/projects" class={activeNav === 'projects' ? 'active' : ''}>projects</a>
-    <button
-      id="theme-toggle"
-      aria-label="Toggle dark mode"
-    >◑</button>
+    <button id="theme-toggle" aria-label="Toggle dark mode">◑</button>
   </nav>
 </aside>
 
@@ -30,7 +27,9 @@ const { activeNav } = Astro.props;
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       const nextTheme = isDark ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', nextTheme);
-      try { localStorage.setItem('theme', nextTheme); } catch (_) {}
+      try {
+        localStorage.setItem('theme', nextTheme);
+      } catch (_) {}
     });
   }
 </script>

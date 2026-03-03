@@ -1,326 +1,478 @@
 ---
-import { getArticleSummaries, deleteArticle, type ArticleSummary } from '../../lib/db';
+import { getAdminArticleSummaries, type ArticleSummary } from '../../lib/db';
 import { getRuntimeEnv } from '../../lib/runtime';
+import { formatDate } from '../../utils/date';
 import config from '../../../config.json';
 
 const env = getRuntimeEnv(Astro.locals);
 
-// Handle POST actions
-if (Astro.request.method === 'POST') {
-  const formData = await Astro.request.formData();
-  const action = formData.get('_action');
-
-  if (action === 'delete') {
-    const slug = formData.get('slug') as string;
-    if (slug) await deleteArticle(slug, env);
-    return Astro.redirect('/admin');
-  }
-}
-
 let articles: ArticleSummary[] = [];
 try {
-  articles = await getArticleSummaries(env);
+  articles = await getAdminArticleSummaries(env);
 } catch (err) {
   console.error('Admin list DB error:', err);
 }
 ---
 
-<!DOCTYPE html>
-<html lang="en" data-theme="light">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — {config.site_name}</title>
-  <meta name="robots" content="noindex, nofollow" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin — {config.site_name}</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <!-- Prevent flash of wrong theme -->
+    <script is:inline>
+      try {
+        const svdTheme = localStorage.getItem('theme');
+        if (svdTheme) document.documentElement.setAttribute('data-theme', svdTheme);
+        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (_) {}
+    </script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f5f5f5;
-      color: #222;
-      min-height: 100vh;
-    }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #f5f5f5;
+        color: #222;
+        min-height: 100vh;
+      }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem;
-    }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid #ddd;
-    }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #ddd;
+      }
 
-    h1 { font-size: 1.5rem; font-weight: 700; }
-    h2 { font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem; }
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+      h2 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
 
-    .card {
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
+      .card {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
 
-    .form-group {
-      margin-bottom: 1rem;
-    }
+      .form-group {
+        margin-bottom: 1rem;
+      }
 
-    label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: #555;
-      margin-bottom: 0.35rem;
-    }
+      label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #555;
+        margin-bottom: 0.35rem;
+      }
 
-    input[type="text"],
-    input[type="date"],
-    textarea {
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 0.95rem;
-      font-family: inherit;
-      background: #fafafa;
-    }
+      input[type='text'],
+      input[type='date'],
+      textarea {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        background: #fafafa;
+      }
 
-    textarea {
-      font-family: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
-      font-size: 0.85rem;
-      resize: vertical;
-    }
+      textarea {
+        font-family: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+        font-size: 0.85rem;
+        resize: vertical;
+      }
 
-    input:focus, textarea:focus {
-      outline: 2px solid #333;
-      outline-offset: 1px;
-      background: #fff;
-    }
+      input:focus,
+      textarea:focus {
+        outline: 2px solid #333;
+        outline-offset: 1px;
+        background: #fff;
+      }
 
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
 
-    .checkbox-group input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-    }
+      .checkbox-group input[type='checkbox'] {
+        width: 16px;
+        height: 16px;
+      }
 
-    .checkbox-group label {
-      margin: 0;
-      font-weight: 400;
-      color: #333;
-    }
+      .checkbox-group label {
+        margin: 0;
+        font-weight: 400;
+        color: #333;
+      }
 
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
 
-    button {
-      padding: 0.5rem 1.25rem;
-      border-radius: 5px;
-      border: 1px solid #333;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
+      button {
+        padding: 0.5rem 1.25rem;
+        border-radius: 5px;
+        border: 1px solid #333;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
 
-    .btn-primary {
-      background: #222;
-      color: #fff;
-      border-color: #222;
-    }
+      .btn-primary {
+        background: #222;
+        color: #fff;
+        border-color: #222;
+      }
 
-    .btn-primary:hover { background: #444; }
+      .btn-primary:hover {
+        background: #444;
+      }
 
-    .btn-danger {
-      background: none;
-      color: #c0392b;
-      border-color: #c0392b;
-      padding: 0.3rem 0.75rem;
-      font-size: 0.8rem;
-    }
+      .btn-danger {
+        background: none;
+        color: #c0392b;
+        border-color: #c0392b;
+        padding: 0.3rem 0.75rem;
+        font-size: 0.8rem;
+      }
 
-    .btn-danger:hover { background: #c0392b; color: #fff; }
+      .btn-danger:hover {
+        background: #c0392b;
+        color: #fff;
+      }
 
-    .btn-sm {
-      padding: 0.3rem 0.75rem;
-      font-size: 0.8rem;
-    }
+      .btn-sm {
+        padding: 0.3rem 0.75rem;
+        font-size: 0.8rem;
+      }
 
-    .article-list { list-style: none; }
+      .article-list {
+        list-style: none;
+      }
 
-    .article-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding: 0.85rem 0;
-      border-bottom: 1px dashed #e0e0e0;
-      gap: 1rem;
-    }
+      .article-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 0.85rem 0;
+        border-bottom: 1px dashed #e0e0e0;
+        gap: 1rem;
+      }
 
-    .article-item:last-child { border-bottom: none; }
+      .article-item:last-child {
+        border-bottom: none;
+      }
 
-    .article-info { flex: 1; min-width: 0; }
+      .article-info {
+        flex: 1;
+        min-width: 0;
+      }
 
-    .article-title-link {
-      font-weight: 500;
-      font-size: 0.95rem;
-      color: #222;
-      text-decoration: none;
-    }
+      .article-title-link {
+        font-weight: 500;
+        font-size: 0.95rem;
+        color: #222;
+        text-decoration: none;
+      }
 
-    .article-title-link:hover { text-decoration: underline; }
+      .article-title-link:hover {
+        text-decoration: underline;
+      }
 
-    .article-meta {
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: 0.2rem;
-    }
+      .article-meta {
+        font-size: 0.8rem;
+        color: #888;
+        margin-top: 0.2rem;
+      }
 
-    .badge {
-      display: inline-block;
-      font-size: 0.7rem;
-      padding: 0.1rem 0.4rem;
-      border-radius: 3px;
-      background: #e8f5e9;
-      color: #2e7d32;
-      font-weight: 600;
-      margin-left: 0.4rem;
-    }
+      .badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 3px;
+        background: #e8f5e9;
+        color: #2e7d32;
+        font-weight: 600;
+        margin-left: 0.4rem;
+      }
 
-    .article-actions { display: flex; gap: 0.5rem; align-items: center; }
+      .badge-hidden {
+        background: #fff3e0;
+        color: #e65100;
+      }
 
-    .logout-link {
-      font-size: 0.85rem;
-      padding: 0.35rem 0.75rem;
-      border: 1px solid #333;
-      border-radius: 5px;
-      color: #333;
-      text-decoration: none;
-      font-weight: 500;
-    }
+      .article-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
 
-    .logout-link:hover { background: #f0f0f0; }
+      .logout-link {
+        font-size: 0.85rem;
+        padding: 0.35rem 0.75rem;
+        border: 1px solid #333;
+        border-radius: 5px;
+        color: #333;
+        text-decoration: none;
+        font-weight: 500;
+      }
 
-    .empty { color: #888; font-style: italic; font-size: 0.9rem; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>Admin — {config.site_name}</h1>
-      <div style="display:flex;gap:0.75rem;align-items:center;">
-        <a href="/" style="font-size:0.85rem;color:#666;">← View site</a>
-        <a href="/cdn-cgi/access/logout" class="logout-link">Logout</a>
-      </div>
-    </header>
+      .logout-link:hover {
+        background: #f0f0f0;
+      }
 
-    <!-- New Article Form -->
-    <div class="card">
-      <h2>New Article</h2>
-      <form method="POST" action="/api/articles">
-        <div class="row">
-          <div class="form-group">
-            <label for="title">Title *</label>
-            <input type="text" id="title" name="title" required placeholder="Judul artikel" />
-          </div>
-          <div class="form-group">
-            <label for="slug">Slug *</label>
-            <input type="text" id="slug" name="slug" required placeholder="judul-artikel" />
-          </div>
+      .empty {
+        color: #888;
+        font-style: italic;
+        font-size: 0.9rem;
+      }
+
+      /* Dark mode overrides */
+      [data-theme='dark'] body {
+        background: #111;
+        color: #efefef;
+      }
+      [data-theme='dark'] .card {
+        background: #1a1a1a;
+        border-color: #333;
+      }
+      [data-theme='dark'] header {
+        border-bottom-color: #333;
+      }
+      [data-theme='dark'] label {
+        color: #aaa;
+      }
+      [data-theme='dark'] .checkbox-group label {
+        color: #ccc;
+      }
+      [data-theme='dark'] input[type='text'],
+      [data-theme='dark'] input[type='date'],
+      [data-theme='dark'] textarea {
+        background: #222;
+        border-color: #444;
+        color: #efefef;
+      }
+      [data-theme='dark'] input:focus,
+      [data-theme='dark'] textarea:focus {
+        outline-color: #aaa;
+        background: #2a2a2a;
+      }
+      [data-theme='dark'] button {
+        border-color: #aaa;
+      }
+      [data-theme='dark'] .btn-primary {
+        background: #efefef;
+        color: #111;
+        border-color: #efefef;
+      }
+      [data-theme='dark'] .btn-primary:hover {
+        background: #ccc;
+        border-color: #ccc;
+      }
+      [data-theme='dark'] .article-item {
+        border-bottom-color: #333;
+      }
+      [data-theme='dark'] .article-title-link {
+        color: #efefef;
+      }
+      [data-theme='dark'] .badge {
+        background: #1a3a1a;
+        color: #6fcf97;
+      }
+      [data-theme='dark'] .badge-hidden {
+        background: #3a2a1a;
+        color: #ffb74d;
+      }
+      [data-theme='dark'] .logout-link {
+        border-color: #aaa;
+        color: #ccc;
+      }
+      [data-theme='dark'] .logout-link:hover {
+        background: #222;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Admin — {config.site_name}</h1>
+        <div style="display:flex;gap:0.75rem;align-items:center;">
+          <a href="/" style="font-size:0.85rem;color:#666;">← View site</a>
+          <a href="/cdn-cgi/access/logout" class="logout-link">Logout</a>
         </div>
+      </header>
 
-        <div class="row">
-          <div class="form-group">
-            <label for="date">Date *</label>
-            <input type="date" id="date" name="date" required value={new Date().toISOString().slice(0,10)} />
-          </div>
-          <div class="form-group" style="display:flex;align-items:flex-end;">
-            <div class="checkbox-group">
-              <input type="checkbox" id="featured" name="featured" value="1" />
-              <label for="featured">Featured article</label>
+      <!-- New Article Form -->
+      <div class="card">
+        <h2>New Article</h2>
+        <form method="POST" action="/api/articles">
+          <div class="row">
+            <div class="form-group">
+              <label for="title">Title *</label>
+              <input type="text" id="title" name="title" required placeholder="Judul artikel" />
+            </div>
+            <div class="form-group">
+              <label for="slug">Slug *</label>
+              <input type="text" id="slug" name="slug" required placeholder="judul-artikel" />
             </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="description">Description (SEO/RSS)</label>
-          <input type="text" id="description" name="description" placeholder="Ringkasan singkat artikel (opsional)" />
-        </div>
-
-        <div class="form-group">
-          <label for="content">Content (Markdown) *</label>
-          <textarea id="content" name="content" rows="18" required placeholder="Tulis artikel dalam format Markdown..."></textarea>
-        </div>
-
-        <button type="submit" class="btn-primary">Publish Article</button>
-      </form>
-    </div>
-
-    <!-- Articles List -->
-    <div class="card">
-      <h2>All Articles ({articles.length})</h2>
-      {articles.length === 0 ? (
-        <p class="empty">Belum ada artikel.</p>
-      ) : (
-        <ul class="article-list">
-          {articles.map((article) => (
-            <li class="article-item">
-              <div class="article-info">
-                <a href={`/writing/${article.slug}`} target="_blank" class="article-title-link">
-                  {article.title}
-                  {article.featured && <span class="badge">featured</span>}
-                </a>
-                <div class="article-meta">
-                  {article.date} &middot; /writing/{article.slug}
-                </div>
+          <div class="row">
+            <div class="form-group">
+              <label for="date">Date *</label>
+              <input
+                type="date"
+                id="date"
+                name="date"
+                required
+                value={new Date().toISOString().slice(0, 10)}
+              />
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;gap:1.25rem;">
+              <div class="checkbox-group">
+                <input type="checkbox" id="featured" name="featured" value="1" />
+                <label for="featured">Featured article</label>
               </div>
-              <div class="article-actions">
-                <a href={`/admin/edit/${article.slug}`} class="btn-sm" style="padding:0.3rem 0.75rem;border:1px solid #ccc;border-radius:5px;font-size:0.8rem;color:#333;text-decoration:none;">Edit</a>
-                <form method="POST" onsubmit="return confirm('Hapus artikel ini?')">
-                  <input type="hidden" name="_action" value="delete" />
-                  <input type="hidden" name="slug" value={article.slug} />
-                  <button type="submit" class="btn-danger">Delete</button>
-                </form>
+              <div class="checkbox-group">
+                <input type="checkbox" id="hidden" name="hidden" value="1" />
+                <label for="hidden">Hidden (draft)</label>
               </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  </div>
+            </div>
+          </div>
 
-  <script>
-    // Auto-generate slug dari title
-    const titleInput = document.getElementById('title');
-    const slugInput = document.getElementById('slug');
-    if (titleInput && slugInput) {
-      titleInput.addEventListener('input', () => {
-        if (!(slugInput as HTMLInputElement).dataset.edited) {
-          (slugInput as HTMLInputElement).value = (titleInput as HTMLInputElement).value
-            .toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, '')
-            .trim()
-            .replace(/\s+/g, '-');
+          <div class="form-group">
+            <label for="description">Description (SEO/RSS)</label>
+            <input
+              type="text"
+              id="description"
+              name="description"
+              placeholder="Ringkasan singkat artikel (opsional)"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="content">Content (Markdown) *</label>
+            <textarea
+              id="content"
+              name="content"
+              rows="18"
+              required
+              placeholder="Tulis artikel dalam format Markdown..."></textarea>
+          </div>
+
+          <button type="submit" class="btn-primary">Publish Article</button>
+        </form>
+      </div>
+
+      <!-- Articles List -->
+      <div class="card">
+        <h2>All Articles ({articles.length})</h2>
+        {
+          articles.length === 0 ? (
+            <p class="empty">Belum ada artikel.</p>
+          ) : (
+            <ul class="article-list">
+              {articles.map((article) => (
+                <li class="article-item">
+                  <div class="article-info">
+                    <a href={`/writing/${article.slug}`} target="_blank" class="article-title-link">
+                      {article.title}
+                      {article.featured && <span class="badge">featured</span>}
+                      {article.hidden && <span class="badge badge-hidden">hidden</span>}
+                    </a>
+                    <div class="article-meta">
+                      {formatDate(article.date)} &middot; /writing/{article.slug}
+                    </div>
+                  </div>
+                  <div class="article-actions">
+                    <a
+                      href={`/admin/edit/${article.slug}`}
+                      class="btn-sm"
+                      style="padding:0.3rem 0.75rem;border:1px solid #ccc;border-radius:5px;font-size:0.8rem;color:#333;text-decoration:none;"
+                    >
+                      Edit
+                    </a>
+                    <form method="POST" action="/api/articles">
+                      <input type="hidden" name="_action" value="set_hidden" />
+                      <input type="hidden" name="slug" value={article.slug} />
+                      <input type="hidden" name="hidden" value={article.hidden ? '0' : '1'} />
+                      <button
+                        type="submit"
+                        class="btn-sm"
+                        style={`padding:0.3rem 0.75rem;border-radius:5px;font-size:0.8rem;cursor:pointer;border:1px solid ${article.hidden ? '#2e7d32' : '#e65100'};color:${article.hidden ? '#2e7d32' : '#e65100'};background:none;`}
+                      >
+                        {article.hidden ? 'Unhide' : 'Hide'}
+                      </button>
+                    </form>
+                    <form
+                      method="POST"
+                      action="/api/articles"
+                      onsubmit="return confirm('Hapus artikel ini?')"
+                    >
+                      <input type="hidden" name="_action" value="delete" />
+                      <input type="hidden" name="slug" value={article.slug} />
+                      <button type="submit" class="btn-danger">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )
         }
-      });
-      slugInput.addEventListener('input', () => {
-        (slugInput as HTMLElement).dataset.edited = '1';
-      });
-    }
-  </script>
-</body>
+      </div>
+    </div>
+
+    <script>
+      // Auto-generate slug dari title
+      const titleInput = document.getElementById('title');
+      const slugInput = document.getElementById('slug');
+      if (titleInput && slugInput) {
+        titleInput.addEventListener('input', () => {
+          if (!(slugInput as HTMLInputElement).dataset.edited) {
+            (slugInput as HTMLInputElement).value = (titleInput as HTMLInputElement).value
+              .toLowerCase()
+              .replace(/[^a-z0-9\s-]/g, '')
+              .trim()
+              .replace(/\s+/g, '-');
+          }
+        });
+        slugInput.addEventListener('input', () => {
+          (slugInput as HTMLElement).dataset.edited = '1';
+        });
+      }
+    </script>
+  </body>
 </html>

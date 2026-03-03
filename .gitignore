@@ -16,4 +16,5 @@ dist/
 .wrangler/
 
 # Secrets
-.env
+.env*
+!.env.example

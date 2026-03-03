@@ -1,26 +1,26 @@
 /**
  * Normalizes a date string or Date object into a Date instance.
- * Uses UTC noon to avoid timezone-related off-by-one day issues.
+ * Parses ISO date strings as UTC noon to prevent timezone off-by-one day issues.
  */
 function toDate(date: string | Date): Date {
   if (date instanceof Date) return date;
-  // Parse as UTC noon to prevent local-timezone shifting the date
-  const d = new Date(date);
-  return d;
+  // Append UTC noon so that e.g. "2026-03-02" is never shifted to the
+  // previous day on machines in a negative UTC offset timezone.
+  return new Date(date + 'T12:00:00Z');
 }
 
 /**
  * Formats a date for display.
  *
- * @param date   - A date string (e.g. "February 22, 2026") or Date object
+ * @param date   - An ISO date string (e.g. "2026-02-22") or Date object
  * @param options - Intl.DateTimeFormatOptions (defaults to long form: "February 22, 2026")
  * @returns      Formatted date string
  *
  * @example
- * formatDate("February 22, 2026")
+ * formatDate("2026-02-22")
  * // → "February 22, 2026"
  *
- * formatDate("February 22, 2026", { month: "short", year: "2-digit" })
+ * formatDate("2026-02-22", { month: "short", year: "2-digit" })
  * // → "Feb '26"  (index page short form)
  */
 export function formatDate(
@@ -45,11 +45,11 @@ export function formatDate(
 /**
  * Returns an ISO 8601 date string (YYYY-MM-DD) suitable for HTML datetime attributes.
  *
- * @param date - A date string (e.g. "February 22, 2026") or Date object
+ * @param date - An ISO date string (e.g. "2026-02-22") or Date object
  * @returns    ISO date string, e.g. "2026-02-22"
  *
  * @example
- * getISODate("February 22, 2026")
+ * getISODate("2026-02-22")
  * // → "2026-02-22"
  */
 export function getISODate(date: string | Date): string {

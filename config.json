@@ -1,8 +1,7 @@
 {
-    "site_name": "kchos0",
-    "author": "kchos0",
-    "description": "minimalist portfolio and writings.",
-    "intro_text": "berbagi tentang <span class=\"highlight\">web development</span> dan pengunaan <span class=\"highlight\">AI</span> dengan cara yang menarik dan berguna.",
-    "threads_link": "https://www.threads.net/@kchos0",
-    "github_link": "https://github.com/kchos0"
+  "site_name": "kchos0",
+  "author": "kchos0",
+  "description": "minimalist portfolio and writings.",
+  "threads_link": "https://www.threads.net/@kchos0",
+  "github_link": "https://github.com/kchos0"
 }

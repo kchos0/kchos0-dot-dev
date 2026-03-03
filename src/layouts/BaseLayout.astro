@@ -12,13 +12,7 @@ interface Props {
   ogImage?: string | undefined;
 }
 
-const {
-  title,
-  description,
-  activeNav,
-  ogType,
-  ogImage,
-} = Astro.props;
+const { title, description, activeNav, ogType, ogImage } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
@@ -26,7 +20,13 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={title} description={description} ogType={ogType} canonicalURL={canonicalURL} ogImage={ogImage} />
+    <BaseHead
+      title={title}
+      description={description}
+      ogType={ogType}
+      canonicalURL={canonicalURL}
+      ogImage={ogImage}
+    />
     <slot name="head" />
   </head>
 
@@ -34,7 +34,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <div class="site-wrapper">
       <Sidebar activeNav={activeNav} />
 
-      <main class="content-area" data-pagefind-body>
+      <main class="content-area">
         <slot />
         <Footer />
       </main>

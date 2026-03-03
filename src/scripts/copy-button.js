@@ -33,16 +33,19 @@ export function initCopyButtons(selector = '.article-body') {
           return;
         }
 
-        navigator.clipboard.writeText(code.innerText).then(() => {
-          btn.textContent = 'copied!';
-          btn.classList.add('copied');
-          setTimeout(() => {
-            btn.textContent = 'copy';
-            btn.classList.remove('copied');
-          }, 2000);
-        }).catch((err) => {
-          console.error('copy-button: failed to copy text.', err);
-        });
+        navigator.clipboard
+          .writeText(code.innerText)
+          .then(() => {
+            btn.textContent = 'copied!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+              btn.textContent = 'copy';
+              btn.classList.remove('copied');
+            }, 2000);
+          })
+          .catch((err) => {
+            console.error('copy-button: failed to copy text.', err);
+          });
       });
     });
   });

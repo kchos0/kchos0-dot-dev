@@ -7,13 +7,7 @@ export function makeExcerpt(content: string, maxLen = 160): string {
   const lines = content.split('\n');
   for (const line of lines) {
     const s = line.trim();
-    if (
-      !s ||
-      s.startsWith('#') ||
-      s.startsWith('<') ||
-      s.startsWith('!') ||
-      s.startsWith('---')
-    )
+    if (!s || s.startsWith('#') || s.startsWith('<') || s.startsWith('!') || s.startsWith('---'))
       continue;
     let excerpt = s
       .replace(/\*\*(.+?)\*\*/g, '$1')
