@@ -10,12 +10,6 @@ export default defineConfig({
     },
     imageService: 'compile',
   }),
-  session: {
-    driver: 'cloudflare-kv-binding',
-    options: {
-      binding: 'SESSION',
-    },
-  },
   build: {
     inlineStylesheets: 'always',
   },
