@@ -28,6 +28,9 @@ if (project.hidden) {
 
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400');
 
+// Check if project has code blocks (to conditionally load copy button script)
+const hasCodeBlocks = project.content ? project.content.includes('```') : false;
+
 // Render Markdown → HTML (if content exists, with caching)
 const contentHtml = project.content
   ? await renderMarkdown(project.content, { gfm: true, breaks: false })
@@ -62,12 +65,14 @@ const metaDescription = project.description || project.title;
 
     {contentHtml && <div class="project-body" set:html={contentHtml} />}
   </article>
-</BaseLayout>
 
-<script>
-  import { initCopyButtons } from '../../scripts/copy-button.js';
-  initCopyButtons('.project-body');
-</script>
+{hasCodeBlocks && (
+  <script>
+    import { initCopyButtons } from '../../scripts/copy-button.js';
+    initCopyButtons('.project-body');
+  </script>
+)}
+</BaseLayout>
 
 <style>
   .back-link {

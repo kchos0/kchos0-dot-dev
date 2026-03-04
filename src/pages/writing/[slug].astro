@@ -28,6 +28,9 @@ if (article.hidden) {
 
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400');
 
+// Check if article has code blocks (to conditionally load copy button script)
+const hasCodeBlocks = article.content.includes('```');
+
 // Render Markdown → HTML (with caching)
 const contentHtml = await renderMarkdown(article.content, {
   gfm: true,
@@ -82,12 +85,16 @@ const jsonLd = {
 
     <div class="article-body" set:html={contentHtml} />
   </article>
+
+{hasCodeBlocks && (
+  <script>
+    import { initCopyButtons } from '../../scripts/copy-button.js';
+    initCopyButtons('.article-body');
+  </script>
+)}
 </BaseLayout>
 
-<script>
-  import { initCopyButtons } from '../../scripts/copy-button.js';
-  initCopyButtons('.article-body');
-</script>
+
 
 <style>
   .back-link {
