@@ -4,7 +4,7 @@ import { getArticleBySlug, type Article } from '../../lib/db';
 import { getRuntimeEnv } from '../../lib/runtime';
 import config from '../../../config.json';
 import { formatDate, getISODate } from '../../utils/date';
-import { marked } from '../../lib/markdown';
+import { renderMarkdown } from '../../lib/markdown';
 
 const { slug } = Astro.params;
 const env = getRuntimeEnv(Astro.locals);
@@ -28,8 +28,8 @@ if (article.hidden) {
 
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400');
 
-// Render Markdown → HTML
-const contentHtml = await marked.parse(article.content, {
+// Render Markdown → HTML (with caching)
+const contentHtml = await renderMarkdown(article.content, {
   gfm: true,
   breaks: false,
 });
