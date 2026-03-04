@@ -78,9 +78,9 @@ const jsonLd = {
   <a href="/writing" class="back-link">&larr; back to writing</a>
 
   <article>
-    <header class="article-header">
-      <h1 class="article-title">{article.title}</h1>
-      <time class="article-date" datetime={dateISO}>{formatDate(article.date)}</time>
+    <header class="page-header">
+      <h1 class="page-title">{article.title}</h1>
+      <time class="page-date" datetime={dateISO}>{formatDate(article.date)}</time>
     </header>
 
     <div class="content-body" set:html={contentHtml} />
@@ -93,24 +93,3 @@ const jsonLd = {
   </script>
 )}
 </BaseLayout>
-
-
-
-<style>
-  .article-header {
-    margin-top: 1.5rem;
-    margin-bottom: var(--space-lg);
-  }
-
-  .article-title {
-    font-size: clamp(2rem, 4vw, 2.5rem);
-    margin-bottom: 0.5rem;
-    line-height: 1.1;
-  }
-
-  .article-date {
-    font-family: monospace;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-  }
-</style>
