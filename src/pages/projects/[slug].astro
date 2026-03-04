@@ -63,25 +63,18 @@ const metaDescription = project.description || project.title;
       {project.description && <p class="project-description">{project.description}</p>}
     </header>
 
-    {contentHtml && <div class="project-body" set:html={contentHtml} />}
+    {contentHtml && <div class="content-body" set:html={contentHtml} />}
   </article>
 
 {hasCodeBlocks && (
   <script>
     import { initCopyButtons } from '../../scripts/copy-button.js';
-    initCopyButtons('.project-body');
+    initCopyButtons('.content-body');
   </script>
 )}
 </BaseLayout>
 
 <style>
-  .back-link {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    margin-bottom: 2rem;
-    display: inline-block;
-  }
-
   .project-header {
     margin-top: 1.5rem;
     margin-bottom: var(--space-lg);
@@ -119,124 +112,3 @@ const metaDescription = project.description || project.title;
     color: var(--text-muted);
     font-size: 1.05rem;
     line-height: 1.6;
-  }
-
-  /* Project body typography — mirrors article body */
-  .project-body {
-    font-family: var(--font-serif);
-    font-size: 1.15rem;
-    line-height: 1.8;
-    color: var(--text-main);
-    margin-top: var(--space-lg);
-  }
-
-  .project-body :global(p) {
-    margin-bottom: 1.5rem;
-  }
-
-  .project-body :global(h2) {
-    font-family: var(--font-sans);
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-top: 3rem;
-    margin-bottom: 0.85rem;
-    line-height: 1.2;
-    padding-bottom: 0.4rem;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .project-body :global(h3) {
-    font-family: var(--font-sans);
-    font-size: 1.35rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    margin-top: 2.5rem;
-    margin-bottom: 0.6rem;
-    line-height: 1.3;
-  }
-
-  .project-body :global(ul),
-  .project-body :global(ol) {
-    list-style: disc;
-    padding-left: 1.75rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .project-body :global(ol) {
-    list-style: decimal;
-  }
-
-  .project-body :global(li) {
-    margin-bottom: 0.45rem;
-  }
-
-  .project-body :global(hr) {
-    border: none;
-    border-top: 1px dashed var(--border-color);
-    margin: 2.5rem 0;
-  }
-
-  .project-body :global(blockquote) {
-    border-left: 3px solid var(--border-color);
-    padding: 0.25rem 0 0.25rem 1.25rem;
-    color: var(--text-muted);
-    margin: 0 0 1.5rem 0;
-    font-style: italic;
-  }
-
-  .project-body :global(code) {
-    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
-    font-size: 0.85em;
-    background-color: var(--border-color);
-    padding: 0.15em 0.45em;
-    border-radius: 4px;
-  }
-
-  :global(html[data-theme='dark']) .project-body :global(code) {
-    background-color: #2a2a2a;
-  }
-
-  .project-body :global(pre) {
-    position: relative;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    padding: 1.1rem 1.25rem;
-    overflow-x: auto;
-    margin-bottom: 1.75rem;
-    font-size: 0.88rem;
-    line-height: 1.65;
-    background-color: #f6f8fa;
-  }
-
-  :global(html[data-theme='dark']) .project-body :global(pre) {
-    background-color: #161b22;
-    border-color: #30363d;
-  }
-
-  .project-body :global(pre code) {
-    background: none;
-    padding: 0;
-    border-radius: 0;
-    font-size: inherit;
-  }
-
-  .project-body :global(strong),
-  .project-body :global(b) {
-    font-weight: 700;
-  }
-
-  .project-body :global(em),
-  .project-body :global(i) {
-    font-style: italic;
-  }
-
-  .project-body :global(img) {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    margin-top: 1rem;
-  }
-</style>

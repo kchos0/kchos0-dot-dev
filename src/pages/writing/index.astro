@@ -48,69 +48,6 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
 </BaseLayout>
 
 <style>
-  .intro-section {
-    margin-bottom: var(--space-md);
-  }
-
-  @media (min-width: 768px) {
-    .intro-section {
-      margin-bottom: var(--space-lg);
-    }
-  }
-
-  .hero-title {
-    font-size: clamp(2rem, 5vw, 3rem);
-    margin-bottom: var(--space-sm);
-  }
-
-  .intro-subtitle {
-    font-family: var(--font-sans);
-    color: var(--text-muted);
-    font-size: 1.1rem;
-  }
-
-  .list-section {
-    margin-bottom: var(--space-lg);
-  }
-
-  .clean-list {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .list-link {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 1.5rem 0;
-    border-bottom: 1px dashed var(--border-color);
-  }
-
-  .list-link:hover {
-    border-bottom-style: solid;
-    border-bottom-color: var(--text-main);
-  }
-
-  .date-meta {
-    font-family: monospace;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
-  }
-
-  .article-title {
-    font-size: 1.25rem;
-    font-weight: 500;
-    line-height: 1.3;
-    margin-bottom: 0.5rem;
-  }
-
-  .excerpt {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    line-height: 1.6;
-  }
-
   .empty-item {
     padding: 1.5rem 0;
   }
