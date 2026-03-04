@@ -239,17 +239,29 @@ export async function duplicateArticle(
   const original = await getArticleBySlug(slug, env);
   if (!original) throw new Error(`Article "${slug}" not found`);
 
-  // Find an available slug
-  let newSlug = `${slug}-copy`;
-  let suffix = 2;
-  while (true) {
-    const existing = await client.execute({
-      sql: `SELECT id FROM articles WHERE slug = ?`,
-      args: [newSlug],
-    });
-    if (existing.rows.length === 0) break;
-    newSlug = `${slug}-copy-${suffix++}`;
-  }
+  // Find all existing slugs matching the pattern in a single query
+  const existingSlugs = await client.execute({
+    sql: `SELECT slug FROM articles WHERE slug LIKE ?`,
+    args: [`${slug}-copy%`],
+  });
+
+  // Extract suffix numbers from existing slugs
+  const existingNumbers = existingSlugs.rows
+    .map((row) => {
+      const slugStr = String(row.slug);
+      const basePattern = `${slug}-copy-`;
+      if (slugStr === `${slug}-copy`) return 1;
+      if (slugStr.startsWith(basePattern)) {
+        const num = parseInt(slugStr.substring(basePattern.length), 10);
+        return isNaN(num) ? 0 : num;
+      }
+      return 0;
+    })
+    .filter((n) => n > 0);
+
+  // Determine the next available slug
+  const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+  const newSlug = nextNumber === 1 ? `${slug}-copy` : `${slug}-copy-${nextNumber}`;
 
   await client.execute({
     sql: `INSERT INTO articles (slug, title, description, date, featured, hidden, content)
@@ -453,17 +465,29 @@ export async function duplicateProject(
   const original = await getProjectBySlug(slug, env);
   if (!original) throw new Error(`Project "${slug}" not found`);
 
-  // Find an available slug
-  let newSlug = `${slug}-copy`;
-  let suffix = 2;
-  while (true) {
-    const existing = await client.execute({
-      sql: `SELECT id FROM projects WHERE slug = ?`,
-      args: [newSlug],
-    });
-    if (existing.rows.length === 0) break;
-    newSlug = `${slug}-copy-${suffix++}`;
-  }
+  // Find all existing slugs matching the pattern in a single query
+  const existingSlugs = await client.execute({
+    sql: `SELECT slug FROM projects WHERE slug LIKE ?`,
+    args: [`${slug}-copy%`],
+  });
+
+  // Extract suffix numbers from existing slugs
+  const existingNumbers = existingSlugs.rows
+    .map((row) => {
+      const slugStr = String(row.slug);
+      const basePattern = `${slug}-copy-`;
+      if (slugStr === `${slug}-copy`) return 1;
+      if (slugStr.startsWith(basePattern)) {
+        const num = parseInt(slugStr.substring(basePattern.length), 10);
+        return isNaN(num) ? 0 : num;
+      }
+      return 0;
+    })
+    .filter((n) => n > 0);
+
+  // Determine the next available slug
+  const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+  const newSlug = nextNumber === 1 ? `${slug}-copy` : `${slug}-copy-${nextNumber}`;
 
   await client.execute({
     sql: `INSERT INTO projects (slug, title, description, url, date, featured, hidden, content)
