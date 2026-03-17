@@ -1,6 +1,6 @@
 # kchos0.dev
 
-A minimalist personal portfolio and writing space built with Astro 5 and TinaCMS.
+A minimalist personal portfolio and writing space built with Astro 5.
 
 ### Tech Stack
 
